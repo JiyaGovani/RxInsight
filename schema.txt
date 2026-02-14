@@ -36,3 +36,19 @@ CREATE TABLE IF NOT EXISTS medicines (
     side_effect TEXT,
     drug_interactions TEXT
 );
+
+-- Reminders table
+CREATE TABLE IF NOT EXISTS reminders (
+    reminder_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    medicine_name VARCHAR(255) NOT NULL,
+    number_of_days INTEGER NOT NULL CHECK (number_of_days > 0),
+    frequency TEXT[] NOT NULL,
+    time_setters TIME[] NOT NULL,
+    missed_dose_reminder BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(10) NOT NULL DEFAULT 'pending' CHECK (status IN ('taken', 'missed', 'pending')),
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE GENERATED ALWAYS AS (start_date + (number_of_days - 1)) STORED,
+    msg_sent BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
