@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - RxInsight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Shared dashboard CSS (same as user dashboard) -->
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <!-- Admin-only overrides -->
+    <link rel="stylesheet" href="/static/css/admin_dashboard.css">
+</head>
+
+<body id="dashboard">
+
+    <!-- Navbar (identical structure to user dashboard) -->
+    <nav class="navbar rx-topbar" aria-label="Dashboard navigation">
+        <a class="logo d-flex align-items-center gap-2 text-decoration-none" href="/">
+            <img src="/static/images/logo.png" alt="RxInsight Logo" id="logo" class="rx-fallback-img" data-fallback-size="sm">
+            <span class="d-flex align-items-baseline gap-1">
+                <span class="rx-logo-rx">Rx</span>
+                <span class="rx-logo-insight">Insight</span>
+            </span>
+        </a>
+
+        <button class="rx-nav-toggle" type="button" id="rxNavToggle" aria-label="Open menu" aria-controls="rxNavMenu" aria-expanded="false">
+            <span class="rx-nav-toggle-bar"></span>
+            <span class="rx-nav-toggle-bar"></span>
+            <span class="rx-nav-toggle-bar"></span>
+        </button>
+
+        <div class="rx-topbar-right" id="rxNavMenu">
+            <ul class="nav-links rx-nav-links">
+                <li><a href="#" class="nav-btn active" aria-current="page">Dashboard</a></li>
+                <li><a href="#" class="nav-btn" id="rxTopbarSettings">Settings</a></li>
+                <li><a href="/login" class="nav-btn outline">Logout</a></li>
+            </ul>
+
+            <div class="rx-user-pill" role="group" aria-label="Signed in user">
+                <div class="rx-user-avatar" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></div>
+                <div class="rx-user-meta">
+                    <div class="rx-user-name">{{ username|default('Admin', true) }}</div>
+                    <div class="rx-user-sub">System Admin</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4 rx-dashboard" style="min-height: 80vh;">
+
+        <!-- Welcome Section -->
+        <div class="row mb-4">
+            <div class="col-12 text-center text-md-start px-md-5">
+                <h2 class="rx-page-title">Admin <span class="rx-accent">Dashboard</span></h2>
+                <p class="rx-page-subtitle">System summary, key stats, and operational signals.</p>
+            </div>
+        </div>
+
+        <!-- Quick KPI row (same card component as user dashboard) -->
+        <div class="row px-md-4 g-3 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="rx-kpi">
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="rx-kpi-body">
+                        <div class="rx-kpi-label">Total Users</div>
+                        <div class="rx-kpi-value">2,148</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="rx-kpi">
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-file-prescription"></i></div>
+                    <div class="rx-kpi-body">
+                        <div class="rx-kpi-label">Prescriptions</div>
+                        <div class="rx-kpi-value">12,604</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="rx-kpi">
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="rx-kpi-body">
+                        <div class="rx-kpi-label">Active Alerts</div>
+                        <div class="rx-kpi-value">7</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="rx-kpi">
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-shield-heart"></i></div>
+                    <div class="rx-kpi-body">
+                        <div class="rx-kpi-label">System Status</div>
+                        <div class="rx-kpi-value">OK</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row px-md-4">
+
+            <!-- Main Content Area (Left) -->
+            <div class="col-md-9 mb-4 order-2 order-md-1">
+                <div class="results-panel h-100 p-4 rx-main-panel" style="min-height: 500px;">
+
+                    <!-- Overview Panel -->
+                    <div id="view-overview" class="dashboard-content-panel active" role="region" aria-label="Overview">
+                        <h3 class="mb-4"
+                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
+                            <i class="fa-solid fa-gauge me-2"></i>Admin Overview
+                        </h3>
+                        <div class="alert alert-info"
+                            style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
+                            <i class="fa-solid fa-circle-info me-2"></i>No critical incidents. Scheduled maintenance window: Sunday 02:00–02:30.
+                        </div>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.7);">
+                                    <div class="card-body text-center">
+                                        <i class="fa-solid fa-users fa-2x mb-2" style="color: var(--primary-color);"></i>
+                                        <h5 class="fw-bold" style="color: var(--secondary-color);">2,148</h5>
+                                        <p class="text-muted small mb-0">Total Users</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.7);">
+                                    <div class="card-body text-center">
+                                        <i class="fa-solid fa-file-prescription fa-2x mb-2" style="color: var(--primary-color);"></i>
+                                        <h5 class="fw-bold" style="color: var(--secondary-color);">12,604</h5>
+                                        <p class="text-muted small mb-0">Total Prescriptions</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.7);">
+                                    <div class="card-body text-center">
+                                        <i class="fa-solid fa-triangle-exclamation fa-2x mb-2" style="color: var(--primary-color);"></i>
+                                        <h5 class="fw-bold" style="color: var(--secondary-color);">7</h5>
+                                        <p class="text-muted small mb-0">Active Alerts</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Users Panel -->
+                    <div id="view-users" class="dashboard-content-panel" role="region" aria-label="Manage Users">
+                        <h3 class="mb-4"
+                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
+                            <i class="fa-solid fa-users me-2"></i>Manage Users
+                        </h3>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <input type="search" class="form-control" style="max-width: 280px;" placeholder="Search users…" aria-label="Search users">
+                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-user-plus me-1"></i>Add User</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless align-middle"
+                                style="background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden;">
+                                <thead style="background-color: var(--secondary-color); color: white;">
+                                    <tr>
+                                        <th class="py-3 ps-3">User</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th class="text-end pe-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <td class="ps-3 fw-bold">Jiya Patel</td>
+                                        <td>jiya@example.com</td>
+                                        <td>Admin</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <td class="ps-3 fw-bold">John Doe</td>
+                                        <td>john@example.com</td>
+                                        <td>User</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <td class="ps-3 fw-bold">Aisha Khan</td>
+                                        <td>aisha@example.com</td>
+                                        <td>User</td>
+                                        <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                        <td class="text-end pe-3">
+                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- View Prescriptions Panel -->
+                    <div id="view-prescriptions" class="dashboard-content-panel" role="region" aria-label="View Prescriptions">
+                        <h3 class="mb-4"
+                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
+                            <i class="fa-solid fa-file-prescription me-2"></i>View Prescriptions
+                        </h3>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <input type="search" class="form-control" style="max-width: 280px;" placeholder="Search by patient / doctor / medicine…" aria-label="Search prescriptions">
+                            <select class="form-select" style="max-width: 160px;" aria-label="Filter prescriptions">
+                                <option>All</option>
+                                <option>Active</option>
+                                <option>Expired</option>
+                                <option>Flagged</option>
+                            </select>
+                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-filter me-1"></i>Apply</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless align-middle"
+                                style="background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden;">
+                                <thead style="background-color: var(--secondary-color); color: white;">
+                                    <tr>
+                                        <th class="py-3 ps-3">Prescription</th>
+                                        <th>Patient</th>
+                                        <th>Doctor</th>
+                                        <th>Status</th>
+                                        <th class="text-end pe-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <td class="ps-3 fw-bold text-muted">#RX-10293</td>
+                                        <td>John Doe</td>
+                                        <td>Dr. Smith</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <td class="ps-3 fw-bold text-muted">#RX-10281</td>
+                                        <td>Aisha Khan</td>
+                                        <td>Dr. Emily White</td>
+                                        <td><span class="badge bg-warning text-dark">Flagged</span></td>
+                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <td class="ps-3 fw-bold text-muted">#RX-10214</td>
+                                        <td>Mike Chen</td>
+                                        <td>Dr. Alan Grant</td>
+                                        <td><span class="badge bg-secondary">Expired</span></td>
+                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Panel -->
+                    <div id="view-analytics" class="dashboard-content-panel" role="region" aria-label="Analytics">
+                        <h3 class="mb-4"
+                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
+                            <i class="fa-solid fa-chart-line me-2"></i>Analytics
+                        </h3>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <select class="form-select" style="max-width: 180px;" aria-label="Time range">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                            </select>
+                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-chart-column me-1"></i>Refresh</button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 border-0 shadow-sm p-3"
+                                    style="background: rgba(255,255,255,0.6);">
+                                    <h6 class="text-center text-muted">Weekly Prescriptions</h6>
+                                    <div class="d-flex align-items-end justify-content-center gap-2 mt-3"
+                                        style="height: 150px;">
+                                        <div style="width: 30px; height: 45%; background: var(--primary-color); border-radius: 4px;"></div>
+                                        <div style="width: 30px; height: 62%; background: var(--primary-color); border-radius: 4px;"></div>
+                                        <div style="width: 30px; height: 78%; background: var(--primary-color); border-radius: 4px;"></div>
+                                        <div style="width: 30px; height: 58%; background: var(--secondary-color); border-radius: 4px;"></div>
+                                        <div style="width: 30px; height: 92%; background: var(--primary-color); border-radius: 4px;"></div>
+                                        <div style="width: 30px; height: 70%; background: var(--primary-color); border-radius: 4px;"></div>
+                                        <div style="width: 30px; height: 88%; background: var(--primary-color); border-radius: 4px;"></div>
+                                    </div>
+                                    <p class="text-center mt-2 small">Mon - Sun</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="p-3 d-flex flex-column justify-content-center align-items-center h-100"
+                                    style="background: rgba(255,255,255,0.6); border-radius: 12px;">
+                                    <div class="position-relative d-flex justify-content-center align-items-center"
+                                        style="width: 120px; height: 120px; border-radius: 50%; border: 10px solid var(--primary-color); border-right-color: transparent; transform: rotate(45deg);">
+                                    </div>
+                                    <h2 class="mt-3 fw-bold" style="color: var(--secondary-color);">5.4%</h2>
+                                    <p class="text-muted">Alert Rate (Flagged / Total)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alert List Panel -->
+                    <div id="view-alerts" class="dashboard-content-panel" role="region" aria-label="Alert List">
+                        <h3 class="mb-4"
+                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
+                            <i class="fa-solid fa-bell me-2"></i>Alert List
+                        </h3>
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-check-double me-1"></i>Mark All Reviewed</button>
+                        </div>
+
+                        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                            <i class="fa-solid fa-triangle-exclamation fa-xl me-3"></i>
+                            <div class="flex-grow-1">
+                                <strong>Potential Drug Interaction</strong>
+                                <p class="mb-0 small">Aspirin + Ibuprofen flagged for review on #RX-10281.</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary ms-2"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-center mb-3" role="alert"
+                            style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
+                            <i class="fa-solid fa-file-circle-exclamation fa-xl me-3"></i>
+                            <div class="flex-grow-1">
+                                <strong>Missing Dosage Details</strong>
+                                <p class="mb-0 small">OCR confidence low on #RX-10214. Manual confirmation recommended.</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary ms-2"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+
+                        <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                            <i class="fa-solid fa-user-shield fa-xl me-3"></i>
+                            <div class="flex-grow-1">
+                                <strong>Repeated Login Attempts</strong>
+                                <p class="mb-0 small">3 failed attempts detected on admin account in the last hour.</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary ms-2"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right Sidebar (same rx-aside component as user dashboard) -->
+            <div class="col-md-3 mb-4 order-1 order-md-2">
+                <aside class="rx-aside p-4 h-100" aria-label="Quick actions">
+                    <div class="rx-aside-header">
+                        <h4 class="rx-aside-title">Quick Actions</h4>
+                        <p class="rx-aside-subtitle">Navigate admin tools</p>
+                    </div>
+
+                    <div class="rx-action-list" id="rxActionList">
+                        <button type="button" class="dashboard-sidebar-item active" data-view="overview">
+                            <i class="fa-solid fa-gauge"></i>
+                            <span>Overview</span>
+                        </button>
+
+                        <button type="button" class="dashboard-sidebar-item" data-view="users">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Manage Users</span>
+                        </button>
+
+                        <button type="button" class="dashboard-sidebar-item" data-view="prescriptions">
+                            <i class="fa-solid fa-file-prescription"></i>
+                            <span>View Prescriptions</span>
+                        </button>
+
+                        <button type="button" class="dashboard-sidebar-item" data-view="analytics">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </button>
+
+                        <button type="button" class="dashboard-sidebar-item" data-view="alerts">
+                            <i class="fa-solid fa-bell"></i>
+                            <span>Alert List</span>
+                        </button>
+
+                        <button type="button" class="dashboard-sidebar-item" data-view="logout">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </aside>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            /* ── Image fallback (same as user dashboard) ── */
+            function replaceImageWithAlt(img) {
+                if (!img || img.dataset.fallbackApplied === 'true') return;
+                const altText = (img.getAttribute('alt') || 'Image').trim();
+                const size = img.getAttribute('data-fallback-size') || 'sm';
+                const fallback = document.createElement('span');
+                fallback.className = 'rx-img-fallback rx-img-fallback-' + size;
+                fallback.textContent = altText;
+                img.dataset.fallbackApplied = 'true';
+                img.replaceWith(fallback);
+            }
+            document.querySelectorAll('img.rx-fallback-img').forEach(function (img) {
+                img.addEventListener('error', function () { replaceImageWithAlt(img); });
+                if (img.complete && img.naturalWidth === 0) replaceImageWithAlt(img);
+            });
+
+            /* ── Nav toggle (same as user dashboard) ── */
+            var navToggle = document.getElementById('rxNavToggle');
+            var navMenu = document.getElementById('rxNavMenu');
+            var actionList = document.getElementById('rxActionList');
+
+            function setNavOpen(isOpen) {
+                if (!navToggle || !navMenu) return;
+                navToggle.setAttribute('aria-expanded', String(isOpen));
+                navMenu.classList.toggle('rx-nav-open', isOpen);
+            }
+
+            /* ── Panel switching (same pattern as user dashboard) ── */
+            function switchView(viewName) {
+                if (viewName === 'logout') { window.location.href = '/login'; return; }
+
+                document.querySelectorAll('.dashboard-content-panel').forEach(function (panel) {
+                    panel.classList.toggle('active', panel.id === 'view-' + viewName);
+                });
+                document.querySelectorAll('.dashboard-sidebar-item').forEach(function (item) {
+                    item.classList.toggle('active', item.getAttribute('data-view') === viewName);
+                });
+            }
+
+            if (navToggle) {
+                navToggle.addEventListener('click', function () {
+                    var isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+                    setNavOpen(!isOpen);
+                });
+            }
+
+            if (actionList) {
+                actionList.addEventListener('click', function (event) {
+                    var button = event.target.closest('button[data-view]');
+                    if (!button) return;
+                    switchView(button.getAttribute('data-view'));
+                });
+            }
+
+            /* ── Close mobile menu on resize up ── */
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 768) setNavOpen(false);
+            });
+
+            /* ── Topbar Settings shortcut ── */
+            var topbarSettings = document.getElementById('rxTopbarSettings');
+            if (topbarSettings) {
+                topbarSettings.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    switchView('overview');
+                });
+            }
+        })();
+    </script>
+
+</body>
+
+</html>

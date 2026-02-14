@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rx Insight - Making Medication Simple and Stress-Free</title>
+  <meta name="description" content="Rx Insight helps seniors and caregivers understand and manage medical prescriptions with OCR analysis, medication reminders, and health tracking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #1F8A8A;
+      --primary-dark: #17706F;
+      --light-teal: #6EC3C3;
+      --bg-light: #F6FAFB;
+      --accent-blue: #2D6CDF;
+      --grey-text: #6B7280;
+      --dark-text: #1A2B3C;
+      --white: #FFFFFF;
+      --card-shadow: 0 4px 24px rgba(31, 138, 138, 0.08);
+      --card-shadow-hover: 0 8px 40px rgba(31, 138, 138, 0.16);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --transition: 0.3s ease;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 90px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--dark-text);
+      background: var(--bg-light);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(246, 250, 251, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(31, 138, 138, 0.08);
+      padding: 16px 0;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--primary), var(--light-teal));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--dark-text);
+    }
+
+    .logo-text span {
+      color: var(--primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
+
+    .nav-links a {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--grey-text);
+      transition: color var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+      gap: 8px;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--white);
+      box-shadow: 0 4px 16px rgba(31, 138, 138, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(31, 138, 138, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    .btn-large {
+      min-height: 56px;
+      padding: 16px 36px;
+      font-size: 18px;
+      border-radius: var(--radius);
+    }
+
+    .btn-white {
+      background: var(--white);
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-white:hover {
+      background: #F0F9F9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-outline-white {
+      background: transparent;
+      color: var(--white);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-outline-white:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--white);
+      transform: translateY(-2px);
+    }
+
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .mobile-toggle span {
+      display: block;
+      width: 26px;
+      height: 3px;
+      background: var(--dark-text);
+      border-radius: 2px;
+      margin: 5px 0;
+      transition: var(--transition);
+    }
+
+    .hero {
+      padding: 80px 0 100px;
+      background: linear-gradient(160deg, #E8F6F6 0%, #F6FAFB 40%, #EDF4FE 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(110, 195, 195, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -150px;
+      left: -150px;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(45, 108, 223, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      max-width: 540px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(31, 138, 138, 0.08);
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--dark-text);
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--primary);
+    }
+
+    .hero-desc {
+      font-size: 19px;
+      color: var(--grey-text);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(31, 138, 138, 0.12);
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .hero-stat span {
+      font-size: 14px;
+      color: var(--grey-text);
+      font-weight: 500;
+    }
+
+    .hero-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hero-art {
+      width: 100%;
+      max-width: 560px;
+      aspect-ratio: 4 / 3;
+      background: linear-gradient(160deg, rgba(31, 138, 138, 0.07), rgba(45, 108, 223, 0.06));
+      border-radius: 32px;
+      border: 1px solid rgba(31, 138, 138, 0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 32px 28px 0;
+    }
+
+    .hero-art::before {
+      content: '';
+      position: absolute;
+      inset: -30% -20% auto auto;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(110, 195, 195, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-art::after {
+      content: '';
+      position: absolute;
+      inset: auto auto -40% -30%;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(45, 108, 223, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-person {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 360px;
+      align-self: flex-end;
+      margin-right: 12px;
+      opacity: 0.95;
+      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.08));
+    }
+
+    .hero-person svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .hero-phone {
+      position: relative;
+      z-index: 2;
+      width: 240px;
+      border-radius: 32px;
+      background: rgba(246, 250, 251, 0.9);
+      padding: 12px;
+      box-shadow: 0 18px 60px rgba(31, 138, 138, 0.18);
+      border: 1px solid rgba(31, 138, 138, 0.12);
+      transform: translateY(-10px);
+    }
+
+    .hero-phone-inner {
+      background: var(--white);
+      border-radius: 26px;
+      border: 1px solid rgba(31, 138, 138, 0.1);
+      overflow: hidden;
+    }
+
+    .hero-phone-top {
+      height: 48px;
+      background: linear-gradient(135deg, rgba(31, 138, 138, 0.12), rgba(110, 195, 195, 0.08));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+    }
+
+    .hero-phone-notch {
+      width: 92px;
+      height: 18px;
+      border-radius: 100px;
+      background: rgba(26, 43, 60, 0.08);
+      margin: 0 auto;
+    }
+
+    .hero-phone-alert {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: rgba(31, 138, 138, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .hero-phone-alert svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hero-phone-body {
+      padding: 18px 16px 16px;
+      text-align: center;
+    }
+
+    .hero-phone-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark-text);
+      margin-bottom: 10px;
+    }
+
+    .hero-phone-med {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .hero-phone-time {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--grey-text);
+      margin-bottom: 14px;
+    }
+
+    .hero-phone-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 42px;
+      border-radius: 14px;
+      background: var(--primary);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(31, 138, 138, 0.22);
+    }
+
+    .hero-illustration {
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 1;
+      background: linear-gradient(160deg, rgba(31, 138, 138, 0.06), rgba(110, 195, 195, 0.1));
+      border-radius: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border: 1px solid rgba(31, 138, 138, 0.1);
+    }
+
+    .hero-illustration-inner {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .hero-icon-main {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, var(--primary), var(--light-teal));
+      border-radius: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 16px 48px rgba(31, 138, 138, 0.25);
+    }
+
+    .hero-icon-main svg {
+      width: 56px;
+      height: 56px;
+      fill: none;
+      stroke: var(--white);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hero-illustration-text {
+      font-size: 16px;
+      color: var(--grey-text);
+      font-weight: 500;
+    }
+
+    .floating-card {
+      position: absolute;
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: float-card 4s ease-in-out infinite;
+    }
+
+    .floating-card-right {
+      top: 15%;
+      right: -10px;
+      animation-delay: 0s;
+    }
+
+    .floating-card-left {
+      bottom: 20%;
+      left: -20px;
+      animation-delay: 2s;
+    }
+
+    @keyframes float-card {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .floating-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .floating-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+      stroke-linecap: round;
+      fill: none;
+    }
+
+    .floating-card-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--dark-text);
+      white-space: nowrap;
+    }
+
+    .floating-card-sub {
+      font-size: 12px;
+      color: var(--grey-text);
+      font-weight: 400;
+    }
+
+    .section {
+      padding: 80px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto 56px;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--dark-text);
+      line-height: 1.2;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+      font-size: 18px;
+      color: var(--grey-text);
+      line-height: 1.7;
+    }
+
+    .problem {
+      background: var(--white);
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .problem-card {
+      background: var(--bg-light);
+      border-radius: var(--radius);
+      padding: 32px;
+      border: 1px solid rgba(31, 138, 138, 0.06);
+      transition: all var(--transition);
+    }
+
+    .problem-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--card-shadow-hover);
+      border-color: rgba(31, 138, 138, 0.15);
+    }
+
+    .problem-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .problem-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .problem-icon.red { background: #FEF2F2; }
+    .problem-icon.red svg { stroke: #EF4444; }
+    .problem-icon.amber { background: #FFFBEB; }
+    .problem-icon.amber svg { stroke: #F59E0B; }
+    .problem-icon.blue { background: #EFF6FF; }
+    .problem-icon.blue svg { stroke: var(--accent-blue); }
+
+    .problem-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--dark-text);
+    }
+
+    .problem-card p {
+      font-size: 16px;
+      color: var(--grey-text);
+      line-height: 1.7;
+    }
+
+    .how-it-works {
+      background: var(--bg-light);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 52px;
+      left: calc(16.67% + 32px);
+      right: calc(16.67% + 32px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--light-teal));
+      opacity: 0.3;
+    }
+
+    .step-card {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 3px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 0 auto 24px;
+      position: relative;
+      z-index: 1;
+      transition: all var(--transition);
+    }
+
+    .step-card:hover .step-number {
+      background: var(--primary);
+      color: var(--white);
+      transform: scale(1.1);
+    }
+
+    .step-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, rgba(31, 138, 138, 0.08), rgba(110, 195, 195, 0.12));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .step-icon svg {
+      width: 36px;
+      height: 36px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .step-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--dark-text);
+    }
+
+    .step-card p {
+      font-size: 16px;
+      color: var(--grey-text);
+      line-height: 1.7;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .features {
+      background: var(--white);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+
+    .feature-card {
+      background: var(--bg-light);
+      border-radius: var(--radius);
+      padding: 32px;
+      border: 1px solid rgba(31, 138, 138, 0.06);
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--light-teal));
+      transform: scaleX(0);
+      transition: transform var(--transition);
+      transform-origin: left;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--card-shadow-hover);
+      border-color: rgba(31, 138, 138, 0.12);
+    }
+
+    .feature-card:hover::after {
+      transform: scaleX(1);
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, rgba(31, 138, 138, 0.1), rgba(110, 195, 195, 0.15));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .feature-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .feature-card h3 {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--dark-text);
+    }
+
+    .feature-card p {
+      font-size: 16px;
+      color: var(--grey-text);
+      line-height: 1.7;
+    }
+
+    .testimonials {
+      background: linear-gradient(160deg, #E8F6F6 0%, var(--bg-light) 100%);
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+
+    .testimonial-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--card-shadow);
+      transition: all var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .testimonial-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .testimonial-stars {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .star {
+      width: 20px;
+      height: 20px;
+      color: #FBBF24;
+    }
+
+    .testimonial-text {
+      font-size: 16px;
+      color: var(--grey-text);
+      line-height: 1.8;
+      flex: 1;
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(31, 138, 138, 0.08);
+    }
+
+    .testimonial-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--light-teal));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .testimonial-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--dark-text);
+    }
+
+    .testimonial-role {
+      font-size: 14px;
+      color: var(--grey-text);
+    }
+
+    .cta {
+      padding: 100px 0;
+      background: linear-gradient(135deg, var(--primary) 0%, #17706F 50%, #1A5C5C 100%);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(110, 195, 195, 0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .cta h2 {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 20px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .cta p {
+      font-size: 19px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .site-footer {
+      background: #0F2A3C;
+      color: rgba(255, 255, 255, 0.7);
+      padding: 64px 0 32px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand .logo {
+      margin-bottom: 16px;
+    }
+
+    .footer-brand .logo-text {
+      color: var(--white);
+    }
+
+    .footer-brand-desc {
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+      max-width: 300px;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 12px;
+    }
+
+    .footer-social a {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+
+    .footer-social a.footer-email {
+      width: auto;
+      padding: 0 12px;
+      gap: 10px;
+      justify-content: flex-start;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .footer-social a.footer-email span {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .footer-social a:hover {
+      background: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .footer-social svg {
+      width: 18px;
+      height: 18px;
+      fill: rgba(255, 255, 255, 0.7);
+    }
+
+    .footer-col h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-col ul {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .footer-col a {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.6);
+      transition: all var(--transition);
+    }
+
+    .footer-col a:hover {
+      color: var(--light-teal);
+      padding-left: 4px;
+    }
+
+    .footer-divider {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .footer-bottom-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-bottom-links a {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .footer-bottom-links a:hover {
+      color: var(--light-teal);
+    }
+
+    @media (max-width: 1024px) {
+      .hero h1 {
+        font-size: 40px;
+      }
+
+      .hero-inner {
+        gap: 40px;
+      }
+
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        font-size: 17px;
+      }
+
+      .mobile-toggle {
+        display: block;
+      }
+
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        flex-direction: column;
+        padding: 24px;
+        gap: 16px;
+        border-bottom: 1px solid rgba(31, 138, 138, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+
+      .nav-links.active {
+        display: flex;
+      }
+
+      .hero {
+        padding: 48px 0 64px;
+      }
+
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        text-align: center;
+      }
+
+      .hero-content {
+        max-width: 100%;
+      }
+
+      .hero h1 {
+        font-size: 34px;
+      }
+
+      .hero-buttons {
+        justify-content: center;
+      }
+
+      .hero-stats {
+        justify-content: center;
+      }
+
+      .hero-visual {
+        order: -1;
+      }
+
+      .hero-art {
+        max-width: 460px;
+        margin: 0 auto;
+        padding: 22px 18px 0;
+      }
+
+      .hero-phone {
+        width: 228px;
+        transform: translateY(-6px);
+      }
+
+      .section {
+        padding: 64px 0;
+      }
+
+      .section-title {
+        font-size: 30px;
+      }
+
+      .problem-grid,
+      .steps-grid,
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .steps-grid::before {
+        display: none;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cta h2 {
+        font-size: 30px;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+
+      .footer-divider {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+
+      .floating-card-right,
+      .floating-card-left {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .hero-desc {
+        font-size: 17px;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-stats {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .section-title {
+        font-size: 26px;
+      }
+
+      .cta h2 {
+        font-size: 26px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <a href="#" class="logo">
+          <img src="/static/images/logo.png" alt="RxInsight Logo" class="logo-img">
+          <div class="logo-text">Rx <span>Insight</span></div>
+        </a>
+        <nav>
+          <ul class="nav-links" id="navLinks">
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="/login" class="btn btn-primary">Get Started</a></li>
+          </ul>
+        </nav>
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <h1>Making Medication Simple<br>and Stress-Free</h1>
+          <p class="hero-desc">RxInsight helps you understand prescriptions clearly, set reminders easily, and stay on track with your health—designed especially for seniors and caregivers.</p>
+          <div class="hero-buttons">
+            <a href="/upload" class="btn btn-primary btn-large">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Prescription
+            </a>
+            <a href="#how-it-works" class="btn btn-secondary btn-large">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Set Reminder
+            </a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-art" aria-hidden="true">
+            <div class="hero-person">
+              <svg viewBox="0 0 420 340" xmlns="http://www.w3.org/2000/svg" role="presentation" focusable="false">
+                <defs>
+                  <linearGradient id="rxCouch" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0" stop-color="var(--primary)" stop-opacity="0.16"/>
+                    <stop offset="1" stop-color="var(--light-teal)" stop-opacity="0.14"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Soft floor -->
+                <ellipse cx="175" cy="308" rx="150" ry="18" fill="var(--primary)" fill-opacity="0.06"/>
+
+                <!-- Couch -->
+                <path d="M70 210c0-26 20-46 46-46h112c26 0 46 20 46 46v70H70v-70z" fill="url(#rxCouch)"/>
+                <path d="M56 222c0-18 14-32 32-32h18v96H56v-64z" fill="var(--primary)" fill-opacity="0.10"/>
+                <path d="M270 190h18c18 0 32 14 32 32v64h-50v-96z" fill="var(--primary)" fill-opacity="0.10"/>
+                <path d="M84 164h72c16 0 28 12 28 28v22H56v-22c0-16 12-28 28-28z" fill="var(--primary)" fill-opacity="0.10"/>
+
+                <!-- Person (simple monochrome) -->
+                <path d="M195 150c18 0 32-14 32-32s-14-32-32-32-32 14-32 32 14 32 32 32z" fill="var(--dark-text)" fill-opacity="0.10"/>
+                <path d="M170 128c3 16 14 26 25 26 12 0 22-10 26-26" fill="none" stroke="var(--dark-text)" stroke-opacity="0.20" stroke-width="6" stroke-linecap="round"/>
+                <path d="M152 240c6-44 28-72 63-72s56 28 62 72" fill="none" stroke="var(--dark-text)" stroke-opacity="0.18" stroke-width="18" stroke-linecap="round"/>
+
+                <!-- Arm + phone -->
+                <path d="M236 222c18 10 30 6 42-8" fill="none" stroke="var(--primary)" stroke-opacity="0.35" stroke-width="14" stroke-linecap="round"/>
+                <rect x="280" y="188" width="38" height="56" rx="10" fill="var(--dark-text)" fill-opacity="0.10" stroke="var(--dark-text)" stroke-opacity="0.18"/>
+                <rect x="288" y="198" width="22" height="34" rx="6" fill="var(--white)" fill-opacity="0.75"/>
+
+                <!-- Small table -->
+                <path d="M310 262h70c10 0 18 8 18 18v8h-106v-26z" fill="var(--primary)" fill-opacity="0.08"/>
+                <rect x="328" y="238" width="34" height="26" rx="8" fill="var(--primary)" fill-opacity="0.10"/>
+              </svg>
+            </div>
+
+            <div class="hero-phone">
+              <div class="hero-phone-inner">
+                <div class="hero-phone-top">
+                  <div class="hero-phone-alert">
+                    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  </div>
+                  <div class="hero-phone-notch"></div>
+                  <div style="width:34px;"></div>
+                </div>
+                <div class="hero-phone-body">
+                  <div class="hero-phone-title">Time to take your medicine!</div>
+                  <div class="hero-phone-med">Aspirin 81 mg</div>
+                  <div class="hero-phone-time">8:00 AM</div>
+                  <div class="hero-phone-cta">Remind Me</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section problem">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">The Problem</div>
+        <h2 class="section-title">Managing Medications Shouldn't Be This Hard</h2>
+        <p class="section-subtitle">Millions of seniors and caregivers struggle daily with confusing prescriptions, missed doses, and lack of clarity.</p>
+      </div>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="problem-icon red">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <h3>Hard-to-Read Prescriptions</h3>
+          <p>Handwritten prescriptions are often illegible, leading to confusion about medication names, dosages, and schedules.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon amber">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3>Missed Doses & Delays</h3>
+          <p>Without proper reminders, it's easy to forget medication times, which can compromise treatment effectiveness.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon blue">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Caregiver Communication Gaps</h3>
+          <p>Family members and caregivers often have no visibility into whether medications were taken on time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">How It Works</div>
+        <h2 class="section-title">Three Simple Steps to Peace of Mind</h2>
+        <p class="section-subtitle">Get started in minutes. No complicated setup, no learning curve.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <h3>Upload Prescription</h3>
+          <p>Take a photo or upload your prescription. Our OCR technology reads it instantly.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Get Clear Details</h3>
+          <p>Receive structured, easy-to-read medication information with dosages and schedules.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <h3>Stay on Track</h3>
+          <p>Set smart reminders and get alerts. Caregivers get notified if a dose is missed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Everything You Need for Medication Management</h2>
+        <p class="section-subtitle">Built with seniors and caregivers in mind. Simple, reliable, and always accessible.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Prescription OCR Scanning</h3>
+          <p>Upload any prescription image and get structured, clear medication details in seconds.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <h3>Smart Reminders</h3>
+          <p>Never miss a dose with customizable alerts that fit your schedule and routine.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h3>WhatsApp Alerts</h3>
+          <p>Automatically notify family members and caregivers when a dose is missed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          </div>
+          <h3>Health Dashboard</h3>
+          <p>View all prescriptions, medication history, and adherence stats in one simple view.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Secure & Private</h3>
+          <p>Your health data is encrypted and stored securely. We never share your information.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Family Sharing</h3>
+          <p>Manage medications for multiple family members from a single caregiver account.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="cta" id="contact">
+    <div class="container">
+      <div class="cta-inner">
+        <h2>Take Control of Your Health Today</h2>
+        <p>Join thousands of families who trust Rx Insight for clear prescriptions, timely reminders, and complete peace of mind.</p>
+        <div class="cta-buttons">
+          <a href="/" class="btn btn-white btn-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Prescription
+          </a>
+          <a href="/login" class="btn btn-outline-white btn-large">Get Started Free</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <img src="/static/images/logo.png" alt="RxInsight Logo" class="logo-img">
+            <div class="logo-text">Rx <span>Insight</span></div>
+          </a>
+          <p class="footer-brand-desc">Making medication management simple, clear, and stress-free for seniors and caregivers everywhere.</p>
+          <div class="footer-social">
+            <a class="footer-email" href="mailto:rxinsight27@gmail.com" aria-label="Email rxinsight27@gmail.com">
+              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"/></svg>
+              <span>rxinsight27@gmail.com</span>
+            </a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="/">Upload Prescription</a></li>
+            <li><a href="/">Set Reminders</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#">About Us</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-divider">
+        <p>2025 Rx Insight. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('mobileToggle').addEventListener('click', function() {
+      document.getElementById('navLinks').classList.toggle('active');
+    });
+  </script>
+</body>
+</html>

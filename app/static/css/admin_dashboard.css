@@ -1,0 +1,161 @@
+/* =========================
+   Admin Dashboard Overrides
+   Base styles come from dashboard.css
+   This file only holds admin-specific tweaks.
+========================= */
+
+/* Admin KPI cards - slightly bolder shadow for authority feel */
+.rx-kpi-icon {
+  background: linear-gradient(135deg, rgba(11, 60, 93, 0.16), rgba(15, 158, 153, 0.10));
+}
+
+/* Admin table styles */
+.table-responsive .table {
+  margin-bottom: 0;
+}
+
+.table-responsive .table thead th {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 14px 16px;
+  white-space: nowrap;
+}
+
+.table-responsive .table tbody td {
+  font-size: 0.95rem;
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.table-responsive .table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table-responsive .table tbody tr:hover {
+  background: rgba(15, 158, 153, 0.04);
+}
+
+/* Admin badges */
+.badge {
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+}
+
+/* Admin search/filter inputs */
+.form-control[type="search"] {
+  border-radius: 12px;
+  border: 2px solid rgba(15, 158, 153, 0.18);
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.form-control[type="search"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(15, 158, 153, 0.12);
+}
+
+.form-select {
+  border-radius: 12px;
+  border: 2px solid rgba(15, 158, 153, 0.18);
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  transition: border-color 0.25s ease;
+}
+
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(15, 158, 153, 0.12);
+}
+
+/* Admin action buttons */
+.btn-outline-primary {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.btn-outline-primary:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 158, 153, 0.25);
+}
+
+.btn-outline-danger {
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.btn-outline-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
+}
+
+/* Admin alert list items */
+.alert {
+  border-radius: 14px;
+  border-width: 1px;
+  padding: 16px 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alert:hover {
+  transform: translateX(3px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Admin primary action button */
+.btn.text-white[style*="background-color: var(--primary-color)"] {
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(15, 158, 153, 0.2);
+}
+
+/* Admin overview stat cards */
+.card.border-0.shadow-sm {
+  border-radius: 14px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card.border-0.shadow-sm:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
+}
+
+/* Admin bar chart styling */
+.d-flex.align-items-end.justify-content-center.gap-2 div[style*="border-radius: 4px"] {
+  border-radius: 6px !important;
+  transition: opacity 0.2s ease;
+}
+
+.d-flex.align-items-end.justify-content-center.gap-2 div[style*="border-radius: 4px"]:hover {
+  opacity: 0.85;
+}
+
+/* Settings panel (admin) */
+#view-settings .form-label {
+  font-weight: 600;
+  color: var(--secondary-color);
+}
+
+#view-settings .form-control,
+#view-settings .form-select {
+  border-radius: 12px;
+  border: 2px solid rgba(15, 158, 153, 0.18);
+}
+
+#view-settings .form-control:focus,
+#view-settings .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(15, 158, 153, 0.12);
+}

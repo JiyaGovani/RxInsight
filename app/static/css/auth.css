@@ -1,0 +1,494 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap');
+
+/* ---------------- Reset ---------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Fredoka, Arial, Helvetica, sans-serif;
+}
+
+/* ---------------- Accessibility & Typography ---------------- */
+h1 {
+    color: #0B3C5D;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background-color: #0F9E99 !important;
+    border-color: #0F9E99 !important;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #0B7B77 !important;
+    border-color: #0B7B77 !important;
+}
+
+.btn-outline-light {
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+a {
+    color: #0F9E99;
+}
+
+a:hover {
+    color: #0B7B77;
+}
+
+.form-control {
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #0F9E99;
+    box-shadow: 0 0 0 0.2rem rgba(15, 158, 153, 0.25);
+}
+
+/* ---------------- Body ---------------- */
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+    padding: 20px 0;
+}
+
+/* ---------------- Container ---------------- */
+.auth-container {
+    width: 850px;
+    height: 550px;
+    max-width: 95vw;
+    transition: height 0.3s ease;
+}
+
+/* Increase height only when registration form is shown */
+.auth-container.active {
+    height: 650px;
+}
+
+.auth-card {
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ---------------- Forms ---------------- */
+.form-box {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    padding: 40px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.form-box form {
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 10px;
+    width: 100%;
+}
+
+/* Scrollbar only shows if needed on smaller screens */
+.form-box form::-webkit-scrollbar {
+    width: 6px;
+}
+
+.form-box form::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.form-box form::-webkit-scrollbar-thumb {
+    background: #0F9E99;
+    border-radius: 10px;
+}
+
+.form-box form::-webkit-scrollbar-thumb:hover {
+    background: #0B7B77;
+}
+
+.form-box.login {
+    right: 0;
+}
+
+.form-box.register {
+    left: 0;
+    visibility: hidden;
+}
+
+.form-box.forgot-password {
+    right: 0;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.auth-container.active .form-box.login {
+    right: 50%;
+}
+
+.auth-container.active .form-box.register {
+    visibility: visible;
+}
+
+.auth-container.forgot-active .form-box.login {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.auth-container.forgot-active .form-box.forgot-password {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ---------------- Input Icons ---------------- */
+.input-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #0B3C5D;
+    pointer-events: none;
+}
+
+/* ---------------- Form Styling ---------------- */
+input[type="date"],
+input[type="number"] {
+    font-size: 1rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: opacity(0.6);
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+.input-box {
+    position: relative;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+    font-size: 0.875rem;
+    color: #dc3545;
+    margin-top: 0.25rem;
+}
+
+/* Responsive row for weight/height */
+.row.g-2 {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.row.g-2 .col-6 {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ---------------- Toggle Section ---------------- */
+.toggle-box {
+    position: absolute;
+    display: grid;
+    grid-template-columns: 2;
+    width: 100%;
+    height: 100%;
+}
+
+.toggle-box::before {
+    content: "";
+    position: absolute;
+    left: -250%;
+    width: 300%;
+    height: 100%;
+    background: #0F9E99;
+    border-radius: 100px;
+    transition: 1.8s ease-in-out;
+    z-index: 2;
+}
+
+.auth-container.active .toggle-box::before {
+    left: 50%;
+}
+
+/* ---------------- Toggle Panels ---------------- */
+.toggle-panel {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 3;
+    transition: 0.6s ease-in-out;
+}
+
+.toggle-left {
+    left: 0;
+    transition-delay: 1.2s;
+}
+
+.auth-container.active .toggle-left {
+    left: -50%;
+    transition-delay: 0.6s;
+}
+
+.toggle-right {
+    right: -50%;
+    transition-delay: 0.6s;
+}
+
+.auth-container.active .toggle-right {
+    right: 0;
+}
+
+@media screen and (max-width : 576px) {
+    body {
+        padding: 10px 0;
+    }
+
+    h1{
+        font-size: 1.5rem;
+    }
+
+    .btn-primary,
+    .btn-outline-light {
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        font-size: 0.95rem;
+    }
+
+    .auth-container {
+        width: 95vw;
+        height: auto;
+        min-height: 500px;
+        max-height: 90vh;
+    }
+
+    /* Adjust height for active/register state on mobile */
+    .auth-container.active {
+        height: auto;
+        max-height: 95vh;
+    }
+
+    .auth-card {
+        border-radius: 15px;
+    }
+
+    .form-box {
+        bottom: 0;
+        width: 100%;
+        height: 65%;
+        padding: 20px 15px;
+    }
+
+    .form-box form {
+        padding-right: 5px;
+    }
+
+    .auth-container.active .form-box.login {
+        right: 50%;
+        height: 65%;
+    }
+
+    .auth-container.active .form-box.register {
+        height: 65%;
+    }
+
+    .auth-container.active .form-box {
+        bottom: 35%;
+    }
+
+    .auth-container.active .toggle-box::before {
+        left: 0;
+        top: 65%;
+    }
+
+    .toggle-box::before {
+        width: 100%;
+        height: 300%;
+        left: 0;
+        top: -265%;
+    }
+
+    .toggle-panel {
+        width: 100%;
+        height: 35%;
+        padding: 15px;
+    }
+
+    .toggle-panel h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .toggle-panel p {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-container.active .toggle-panel.toggle-left {
+        left: 0;
+        top: -35%;
+    }
+
+    .toggle-panel.toggle-left {
+        top: 0;
+    }
+
+    .toggle-panel.toggle-right {
+        right: 0;
+        bottom: -35%;
+    }
+
+    .auth-container.active .toggle-panel.toggle-right {
+        bottom: 0;
+    }
+
+    /* Ensure inputs are readable on mobile */
+    .input-box {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .form-floating > label {
+        font-size: 0.9rem;
+    }
+
+    /* Adjust spacing for mobile */
+    .mb-2 {
+        margin-bottom: 0.4rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 0.6rem !important;
+    }
+
+    /* Stack weight/height on very small screens */
+    @media screen and (max-width: 380px) {
+        .row.g-2 {
+            flex-direction: column;
+        }
+        
+        .row.g-2 .col-6 {
+            width: 100%;
+        }
+    }
+}
+
+/* ---------------- Tablet (577px - 991px) ---------------- */
+@media screen and (min-width: 577px) and (max-width: 991px) {
+    .auth-container {
+        width: 90vw;
+        max-width: 750px;
+        height: 550px;
+    }
+
+    .auth-container.active {
+        height: 650px;
+    }
+
+    .auth-card {
+        border-radius: 20px;
+    }
+
+    .form-box {
+        padding: 30px;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    .btn-primary {
+        font-size: 1rem;
+    }
+
+    .toggle-panel h2 {
+        font-size: 1.5rem;
+    }
+
+    .toggle-panel p {
+        font-size: 0.95rem;
+    }
+}
+
+/* ---------------- Laptop/Desktop (992px - 1199px) ---------------- */
+@media screen and (min-width: 992px) and (max-width: 1199px) {
+    .auth-container {
+        width: 800px;
+        height: 550px;
+    }
+
+    .auth-container.active {
+        height: 650px;
+    }
+
+    .form-box {
+        padding: 35px;
+    }
+}
+
+/* ---------------- Large Desktop (1200px+) ---------------- */
+@media screen and (min-width: 1200px) {
+    .auth-container {
+        width: 850px;
+        height: 550px;
+    }
+
+    .auth-container.active {
+        height: 650px;
+    }
+}
+
+/* ---------------- Inline Messages ---------------- */
+.auth-msg {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+    text-align: center;
+    animation: authMsgIn 0.3s ease;
+}
+
+.auth-msg-success {
+    background: rgba(40, 167, 69, 0.12);
+    color: #155724;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.auth-msg-error {
+    background: rgba(220, 53, 69, 0.12);
+    color: #721c24;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+@keyframes authMsgIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
