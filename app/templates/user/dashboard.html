@@ -152,35 +152,70 @@
                             style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
                             <i class="fa-solid fa-clock me-2"></i>Set Medicine Reminder
                         </h3>
-                        <form class="p-3" style="background: rgba(255, 255, 255, 0.4); border-radius: 12px;">
+                        <form id="setReminderForm" class="p-3" style="background: rgba(255, 255, 255, 0.4); border-radius: 12px;">
                             <div class="mb-3">
                                 <label class="form-label fw-bold" style="color: var(--secondary-color);">Medicine
                                     Name</label>
-                                <input type="text" class="form-control" placeholder="e.g. Metformin">
+                                <input type="text" class="form-control" placeholder="e.g. Metformin" required>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold"
-                                        style="color: var(--secondary-color);">Dosage</label>
-                                    <input type="text" class="form-control" placeholder="e.g. 500mg">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold"
-                                        style="color: var(--secondary-color);">Frequency</label>
-                                    <select class="form-select">
-                                        <option>Once daily</option>
-                                        <option>Twice daily</option>
-                                        <option>Thrice daily</option>
-                                    </select>
-                                </div>
-                            </div>
+
                             <div class="mb-3">
-                                <label class="form-label fw-bold" style="color: var(--secondary-color);">Time</label>
-                                <input type="time" class="form-control">
+                                <label class="form-label fw-bold" style="color: var(--secondary-color);">Number of Days</label>
+                                <input type="number" class="form-control" id="reminderDays" name="reminder_days" min="1" step="1" placeholder="Enter number of days" required>
                             </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold" style="color: var(--secondary-color);">Frequency</label>
+                                <div class="d-flex flex-wrap gap-3" id="frequencyGroup">
+                                    <div class="form-check">
+                                        <input class="form-check-input reminder-frequency" type="checkbox" value="Morning" id="freqMorning">
+                                        <label class="form-check-label" for="freqMorning">Morning</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input reminder-frequency" type="checkbox" value="Afternoon" id="freqAfternoon">
+                                        <label class="form-check-label" for="freqAfternoon">Afternoon</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input reminder-frequency" type="checkbox" value="Evening" id="freqEvening">
+                                        <label class="form-check-label" for="freqEvening">Evening</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input reminder-frequency" type="checkbox" value="Night" id="freqNight">
+                                        <label class="form-check-label" for="freqNight">Night</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3" id="timeSettersContainer">
+                                <label class="form-label fw-bold" style="color: var(--secondary-color);">Time Setters</label>
+                                <div id="timeSettersList" class="d-flex flex-column gap-2"></div>
+                                <small class="text-muted">Select frequency to generate time setters.</small>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input class="form-check-input" type="checkbox" id="missedDoseReminder">
+                                <label class="form-check-label" for="missedDoseReminder">
+                                    Send missed dose reminders on my chosen contact
+                                </label>
+                            </div>
+
                             <button type="submit" class="btn text-white w-100"
                                 style="background-color: var(--primary-color);">Set Reminder</button>
+                            <div id="setReminderMsg" class="small mt-2"></div>
                         </form>
+
+                        <div class="mt-4" id="remindersListSection">
+                            <h5 class="mb-3" style="color: var(--secondary-color);">
+                                <i class="fa-solid fa-bell me-2"></i>Your Reminders
+                            </h5>
+                            <div class="d-flex flex-wrap gap-2 mb-3" id="reminderFilterGroup">
+                                <button type="button" class="btn btn-sm btn-outline-secondary reminder-filter active" data-filter="all">All</button>
+                                <button type="button" class="btn btn-sm btn-outline-warning reminder-filter" data-filter="pending">Pending</button>
+                                <button type="button" class="btn btn-sm btn-outline-success reminder-filter" data-filter="taken">Taken</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger reminder-filter" data-filter="missed">Missed</button>
+                            </div>
+                            <div id="remindersList" class="d-flex flex-column gap-2"></div>
+                        </div>
                     </div>
 
                     <!-- Upload Prescription View -->
@@ -367,6 +402,27 @@
                 </aside>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Reminder Alert Modal -->
+    <div class="modal fade" id="reminderAlertModal" tabindex="-1" aria-labelledby="reminderAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reminderAlertModalLabel">
+                        <i class="fa-solid fa-bell me-2"></i>Reminder Alert
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2"><strong>Medicine:</strong> <span id="reminderAlertMedicine">-</span></p>
+                    <p class="mb-0"><strong>Time:</strong> <span id="reminderAlertTime">-</span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="reminderAlertTakenBtn">Taken</button>
+                </div>
+            </div>
         </div>
     </div>
 

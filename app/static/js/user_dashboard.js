@@ -71,6 +71,346 @@
     });
 })();
 
+// --- Set Reminder Dynamic Time Setters (Vanilla JS) ---
+(function () {
+    const reminderForm = document.getElementById('setReminderForm');
+    const medicineNameInput = reminderForm ? reminderForm.querySelector('input[type="text"]') : null;
+    const reminderDaysInput = document.getElementById('reminderDays');
+    const frequencyCheckboxes = document.querySelectorAll('.reminder-frequency');
+    const missedDoseCheckbox = document.getElementById('missedDoseReminder');
+    const reminderMsg = document.getElementById('setReminderMsg');
+    const reminderFilterGroup = document.getElementById('reminderFilterGroup');
+    const reminderFilterButtons = document.querySelectorAll('.reminder-filter');
+    const remindersList = document.getElementById('remindersList');
+    const timeSettersContainer = document.getElementById('timeSettersContainer');
+    const timeSettersList = document.getElementById('timeSettersList');
+    const reminderAlertModalEl = document.getElementById('reminderAlertModal');
+    const reminderAlertMedicine = document.getElementById('reminderAlertMedicine');
+    const reminderAlertTime = document.getElementById('reminderAlertTime');
+    const reminderAlertTakenBtn = document.getElementById('reminderAlertTakenBtn');
+
+    if (!reminderForm || !medicineNameInput || !reminderDaysInput || !frequencyCheckboxes.length || !timeSettersContainer || !timeSettersList) return;
+
+    let currentReminderFilter = 'all';
+    let allReminders = [];
+    let popupQueue = [];
+    let activePopup = null;
+
+    const shownPopupKeys = new Set(
+        JSON.parse(sessionStorage.getItem('shownReminderPopupKeys') || '[]')
+    );
+
+    const reminderAlertModal = reminderAlertModalEl && window.bootstrap
+        ? new window.bootstrap.Modal(reminderAlertModalEl)
+        : null;
+
+    function saveShownPopupKeys() {
+        sessionStorage.setItem('shownReminderPopupKeys', JSON.stringify(Array.from(shownPopupKeys)));
+    }
+
+    function getTodayKey() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function formatNowHHMM() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        return `${hh}:${mm}`;
+    }
+
+    function normalizeTime(value) {
+        return String(value || '').slice(0, 5);
+    }
+
+    async function updateReminderStatus(reminderId, status) {
+        const response = await fetch(`/reminders/${reminderId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to update status');
+        }
+    }
+
+    function showNextReminderPopup() {
+        if (!reminderAlertModal || activePopup || popupQueue.length === 0) return;
+
+        activePopup = popupQueue.shift();
+        if (reminderAlertMedicine) reminderAlertMedicine.textContent = activePopup.medicine_name || '-';
+        if (reminderAlertTime) reminderAlertTime.textContent = activePopup.matchedTime || '-';
+        reminderAlertModal.show();
+    }
+
+    function enqueueDueReminderPopups() {
+        const nowHHMM = formatNowHHMM();
+        const todayKey = getTodayKey();
+
+        allReminders
+            .filter((item) => item.status === 'pending')
+            .forEach((item) => {
+                const times = Array.isArray(item.time_setters) ? item.time_setters : [];
+                times.forEach((timeValue) => {
+                    const hhmm = normalizeTime(timeValue);
+                    const popupKey = `${todayKey}:${item.reminder_id}:${hhmm}`;
+                    if (hhmm === nowHHMM && !shownPopupKeys.has(popupKey)) {
+                        shownPopupKeys.add(popupKey);
+                        saveShownPopupKeys();
+                        popupQueue.push({ ...item, matchedTime: hhmm });
+                    }
+                });
+            });
+
+        showNextReminderPopup();
+    }
+
+    function getStatusBadgeClass(status) {
+        if (status === 'taken') return 'bg-success';
+        if (status === 'missed') return 'bg-danger';
+        return 'bg-warning text-dark';
+    }
+
+    function renderReminders(items) {
+        if (!remindersList) return;
+
+        remindersList.innerHTML = '';
+
+        const filteredItems = Array.isArray(items)
+            ? items.filter((item) => currentReminderFilter === 'all' || item.status === currentReminderFilter)
+            : [];
+
+        if (!filteredItems.length) {
+            remindersList.innerHTML = '<div class="text-muted small">No reminders yet.</div>';
+            return;
+        }
+
+        filteredItems.forEach((item) => {
+            const card = document.createElement('div');
+            card.className = 'card border-0 shadow-sm';
+            card.style.background = 'rgba(255,255,255,0.75)';
+
+            const frequencies = (item.frequency || []).join(', ');
+            const times = (item.time_setters || []).join(', ');
+
+            let actions = '';
+            if (item.status === 'pending') {
+                actions = `
+                    <div class="d-flex gap-2 mt-2">
+                        <button class="btn btn-sm btn-success reminder-action" data-id="${item.reminder_id}" data-status="taken">Taken</button>
+                        <button class="btn btn-sm btn-outline-danger reminder-action" data-id="${item.reminder_id}" data-status="missed">✕</button>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <strong style="color: var(--secondary-color);">${item.medicine_name}</strong>
+                        <span class="badge ${getStatusBadgeClass(item.status)}">${item.status}</span>
+                    </div>
+                    <div class="small text-muted">Days: ${item.number_of_days} | ${item.start_date} to ${item.end_date}</div>
+                    <div class="small text-muted">Frequency: ${frequencies}</div>
+                    <div class="small text-muted">Times: ${times}</div>
+                    ${actions}
+                </div>
+            `;
+
+            remindersList.appendChild(card);
+        });
+    }
+
+    function setActiveFilterButton() {
+        reminderFilterButtons.forEach((button) => {
+            const isActive = button.getAttribute('data-filter') === currentReminderFilter;
+            button.classList.toggle('active', isActive);
+        });
+    }
+
+    async function loadReminders() {
+        if (!remindersList) return;
+        try {
+            const response = await fetch('/reminders');
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'Failed to load reminders');
+            allReminders = data.reminders || [];
+            renderReminders(allReminders);
+            enqueueDueReminderPopups();
+        } catch (err) {
+            remindersList.innerHTML = `<div class="text-danger small">${err.message}</div>`;
+        }
+    }
+
+    if (remindersList) {
+        remindersList.addEventListener('click', async function (event) {
+            const button = event.target.closest('.reminder-action');
+            if (!button) return;
+
+            const reminderId = button.getAttribute('data-id');
+            const status = button.getAttribute('data-status');
+
+            try {
+                await updateReminderStatus(reminderId, status);
+                await loadReminders();
+            } catch (err) {
+                if (reminderMsg) {
+                    reminderMsg.textContent = `Error: ${err.message}`;
+                    reminderMsg.style.color = '#dc3545';
+                }
+            }
+        });
+    }
+
+    if (reminderFilterGroup) {
+        reminderFilterGroup.addEventListener('click', async function (event) {
+            const button = event.target.closest('.reminder-filter');
+            if (!button) return;
+            currentReminderFilter = button.getAttribute('data-filter') || 'all';
+            setActiveFilterButton();
+            await loadReminders();
+        });
+    }
+
+    function renderTimeSetters() {
+        const selected = Array.from(frequencyCheckboxes)
+            .filter((checkbox) => checkbox.checked)
+            .map((checkbox) => checkbox.value);
+
+        timeSettersContainer.style.display = selected.length > 0 ? '' : 'none';
+
+        timeSettersList.innerHTML = '';
+
+        selected.forEach((label) => {
+            const row = document.createElement('div');
+            row.className = 'd-flex align-items-center gap-2';
+            row.innerHTML = `
+                <span style="min-width: 90px; color: var(--secondary-color); font-weight: 600;">${label}</span>
+                <input type="time" class="form-control reminder-time" name="time_${label.toLowerCase()}" required />
+            `;
+            timeSettersList.appendChild(row);
+        });
+    }
+
+    frequencyCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', renderTimeSetters);
+    });
+
+    reminderForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        if (!reminderForm.checkValidity()) {
+            reminderForm.reportValidity();
+            return;
+        }
+
+        const selectedFrequencies = Array.from(frequencyCheckboxes)
+            .filter((checkbox) => checkbox.checked)
+            .map((checkbox) => checkbox.value);
+
+        if (selectedFrequencies.length === 0) {
+            if (reminderMsg) {
+                reminderMsg.textContent = 'Please select at least one frequency.';
+                reminderMsg.style.color = '#dc3545';
+            }
+            return;
+        }
+
+        const timeSetters = selectedFrequencies.map((label) => {
+            const input = reminderForm.querySelector(`input[name="time_${label.toLowerCase()}"]`);
+            return input ? input.value : '';
+        });
+
+        if (timeSetters.some((value) => !value)) {
+            if (reminderMsg) {
+                reminderMsg.textContent = 'Please set time for each selected frequency.';
+                reminderMsg.style.color = '#dc3545';
+            }
+            return;
+        }
+
+        const payload = {
+            medicine_name: medicineNameInput.value.trim(),
+            number_of_days: Number(reminderDaysInput.value),
+            frequency: selectedFrequencies,
+            time_setters: timeSetters,
+            missed_dose_reminder: missedDoseCheckbox ? missedDoseCheckbox.checked : false,
+        };
+
+        try {
+            const response = await fetch('/set-reminder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || `Failed (status ${response.status})`);
+            }
+
+            if (reminderMsg) {
+                reminderMsg.textContent = 'Reminder set successfully.';
+                reminderMsg.style.color = '#198754';
+            }
+
+            reminderForm.reset();
+            renderTimeSetters();
+            await loadReminders();
+        } catch (err) {
+            if (reminderMsg) {
+                reminderMsg.textContent = `Error: ${err.message}`;
+                reminderMsg.style.color = '#dc3545';
+            }
+        }
+    });
+
+    if (reminderAlertTakenBtn && reminderAlertModalEl) {
+        reminderAlertTakenBtn.addEventListener('click', async function () {
+            if (!activePopup) return;
+            try {
+                await updateReminderStatus(activePopup.reminder_id, 'taken');
+                activePopup = null;
+                reminderAlertModal.hide();
+                await loadReminders();
+            } catch (err) {
+                if (reminderMsg) {
+                    reminderMsg.textContent = `Error: ${err.message}`;
+                    reminderMsg.style.color = '#dc3545';
+                }
+            }
+        });
+
+        reminderAlertModalEl.addEventListener('hidden.bs.modal', async function () {
+            if (activePopup) {
+                try {
+                    await updateReminderStatus(activePopup.reminder_id, 'missed');
+                } catch (err) {
+                    if (reminderMsg) {
+                        reminderMsg.textContent = `Error: ${err.message}`;
+                        reminderMsg.style.color = '#dc3545';
+                    }
+                }
+                activePopup = null;
+                await loadReminders();
+            }
+
+            showNextReminderPopup();
+        });
+    }
+
+    renderTimeSetters();
+    setActiveFilterButton();
+    loadReminders();
+    setInterval(enqueueDueReminderPopups, 15000);
+})();
+
 // --- Prescription Upload Logic ---
 (function () {
     const browseBtn = document.getElementById('browsePrescriptionBtn');

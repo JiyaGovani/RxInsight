@@ -13,9 +13,11 @@ app.secret_key = os.getenv("SECRET_KEY", "change-me")  # fetch from environment
 # Register auth routes (registration endpoint lives here now)
 from app.routes.auth_routes import bp as auth_bp
 from app.routes.prescription import bp as prescription_bp
+from app.routes.reminder import bp as reminder_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(prescription_bp)
+app.register_blueprint(reminder_bp)
 
 
 @app.route("/")
