@@ -1467,3 +1467,64 @@ footer {
   opacity: 1;
   color: #fff;
 }
+
+/* =========================
+   Upload Medicine Cards
+========================= */
+
+.rx-medicine-heading {
+  color: var(--secondary-color);
+  font-weight: 700;
+}
+
+.rx-medicine-card {
+  background: var(--glass-bg);
+  border: 1px solid rgba(15, 158, 153, 0.2);
+  border-radius: 14px;
+  box-shadow: 0 14px 30px var(--shadow-soft);
+}
+
+.rx-medicine-card .card-body {
+  padding: 1rem 1.1rem;
+}
+
+.rx-medicine-name {
+  color: var(--secondary-color);
+  font-weight: 700;
+}
+
+.rx-medicine-meta {
+  color: #2f4558;
+  margin-bottom: 0.35rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.rx-medicine-meta strong {
+  color: var(--secondary-color);
+}
+
+.rx-buy-btn {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+}
+
+.rx-buy-btn:hover,
+.rx-buy-btn:focus {
+  background: #0d8c81;
+  color: #fff;
+}
+
+.rx-medicine-link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.rx-medicine-link:hover,
+.rx-medicine-link:focus {
+  color: var(--secondary-color);
+}

@@ -1,6 +1,7 @@
+import os
+
 from flask import Flask, render_template, redirect, session
 from dotenv import load_dotenv
-import os
 
 
 load_dotenv()  # loads .env file
@@ -11,8 +12,10 @@ app.secret_key = os.getenv("SECRET_KEY", "change-me")  # fetch from environment
 
 # Register auth routes (registration endpoint lives here now)
 from app.routes.auth_routes import bp as auth_bp
+from app.routes.prescription import bp as prescription_bp
 
 app.register_blueprint(auth_bp)
+app.register_blueprint(prescription_bp)
 
 
 @app.route("/")
@@ -36,6 +39,7 @@ def admin_dashboard():
     if session.get("role") != 1:
         return redirect("/dashboard")
     return render_template("admin/dashboard.html", username=session.get("username"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
