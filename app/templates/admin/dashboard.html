@@ -43,7 +43,7 @@
             <ul class="nav-links rx-nav-links">
                 <li><a href="#" class="nav-btn active" aria-current="page">Dashboard</a></li>
                 <li><a href="#" class="nav-btn" id="rxTopbarSettings">Settings</a></li>
-                <li><a href="/login" class="nav-btn outline">Logout</a></li>
+                <li><a href="/logout" class="nav-btn outline">Logout</a></li>
             </ul>
 
             <div class="rx-user-pill" role="group" aria-label="Signed in user">
@@ -430,7 +430,7 @@
 
             /* ── Panel switching (same pattern as user dashboard) ── */
             function switchView(viewName) {
-                if (viewName === 'logout') { window.location.href = '/login'; return; }
+                if (viewName === 'logout') { window.location.href = '/logout'; return; }
 
                 document.querySelectorAll('.dashboard-content-panel').forEach(function (panel) {
                     panel.classList.toggle('active', panel.id === 'view-' + viewName);

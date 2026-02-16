@@ -10,7 +10,22 @@ bp = Blueprint("reminder", __name__)
 
 def _serialize_reminder(reminder):
 	def _to_iso(value):
-		return value.isoformat() if hasattr(value, "isoformat") else value
+		if value and hasattr(value, "isoformat"):
+			return value.isoformat()
+		return value
+	
+	def _convert_time(t):
+		# Convert PostgreSQL time to HH:MM string
+		if hasattr(t, "hour") and hasattr(t, "minute"):
+			return f"{t.hour:02d}:{t.minute:02d}"
+		# Already a string, extract HH:MM
+		time_str = str(t)
+		if ':' in time_str:
+			return time_str[:5]  # Get HH:MM part
+		return time_str
+	
+	time_setters = reminder.get("time_setters") or []
+	converted_times = [_convert_time(t) for t in time_setters]
 
 	return {
 		"reminder_id": reminder.get("reminder_id"),
@@ -18,7 +33,7 @@ def _serialize_reminder(reminder):
 		"medicine_name": reminder.get("medicine_name"),
 		"number_of_days": reminder.get("number_of_days"),
 		"frequency": reminder.get("frequency") or [],
-		"time_setters": [str(t) for t in (reminder.get("time_setters") or [])],
+		"time_setters": converted_times,
 		"missed_dose_reminder": reminder.get("missed_dose_reminder"),
 		"status": reminder.get("status"),
 		"start_date": _to_iso(reminder.get("start_date")),
@@ -83,7 +98,6 @@ def set_reminder():
 @bp.route("/reminders", methods=["GET"])
 @login_required
 def get_user_reminders():
-	conn = None
 	try:
 		conn = get_connection()
 		reminder_dao = ReminderDAO(conn)

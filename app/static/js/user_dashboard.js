@@ -33,7 +33,7 @@
     }
 
     function switchView(viewName) {
-        if (viewName === 'logout') { window.location.href = '/login'; return; }
+        if (viewName === 'logout') { window.location.href = '/logout'; return; }
 
         document.querySelectorAll('.dashboard-content-panel').forEach(panel => {
             panel.classList.toggle('active', panel.id === 'view-' + viewName);
@@ -42,6 +42,16 @@
         document.querySelectorAll('.dashboard-sidebar-item').forEach(item => {
             item.classList.toggle('active', item.getAttribute('data-view') === viewName);
         });
+
+        // Load active medications when active-prescription view is selected
+        if (viewName === 'active-prescription') {
+            loadActiveMedications();
+        }
+        
+        // Load prescription history when history view is selected
+        if (viewName === 'history') {
+            loadPrescriptionHistory();
+        }
     }
 
     if (navToggle) {
@@ -69,6 +79,269 @@
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 768) setNavOpen(false);
     });
+
+    // Load active medications when view is activated
+    async function loadActiveMedications() {
+        const alert = document.getElementById('activeMedicationsAlert');
+        const list = document.getElementById('activeMedicationsList');
+        if (!alert || !list) return;
+
+        try {
+            const response = await fetch('/reminders');
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'Failed to load medications');
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const activeReminders = (data.reminders || []).filter(r => {
+                if (r.status !== 'pending') return false;
+                
+                const endDate = new Date(r.end_date);
+                endDate.setHours(0, 0, 0, 0);
+                
+                return endDate >= today;
+            });
+
+            if (activeReminders.length === 0) {
+                alert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No active medications at this time.';
+                list.innerHTML = '';
+                return;
+            }
+
+            alert.innerHTML = `<i class="fa-solid fa-circle-info me-2"></i>You have ${activeReminders.length} active medication${activeReminders.length > 1 ? 's' : ''}.`;
+
+            list.innerHTML = activeReminders.map(med => {
+                const frequencies = (med.frequency || []).join(', ');
+                const times = (med.time_setters || []).map(t => window.formatTime12Hour(t)).join(', ');
+                return `
+                    <div class="card border-0 shadow-sm mb-3" style="background: rgba(255,255,255,0.7);">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title fw-bold" style="color: var(--secondary-color);">
+                                        <i class="fa-solid fa-capsules me-2" style="color: var(--primary-color);"></i>${med.medicine_name}
+                                    </h5>
+                                    <p class="card-text text-muted small">
+                                        <i class="fa-regular fa-calendar me-1"></i>Started: ${med.start_date}
+                                    </p>
+                                </div>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong>Frequency:</strong> ${frequencies}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Times:</strong> ${times}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>End Date:</strong> ${med.end_date}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Duration:</strong> ${med.number_of_days} days
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading medications: ${err.message}`;
+            alert.className = 'alert alert-danger';
+            list.innerHTML = '';
+        }
+    }
+
+    // Load for default view on page load
+    loadActiveMedications();
+    updateKPIs();
+    
+    // Helper function to convert 24-hour time to 12-hour format
+    function formatTime12Hour(time24) {
+        if (!time24 || time24 === '--:--') return '--:--';
+        
+        const [hours24, minutes] = time24.split(':').map(Number);
+        const period = hours24 >= 12 ? 'PM' : 'AM';
+        const hours12 = hours24 % 12 || 12;
+        
+        return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+    }
+    
+    // Update KPI values dynamically
+    async function updateKPIs() {
+        try {
+            // Fetch reminders to count active medications
+            const remindersResponse = await fetch('/reminders');
+            const remindersData = await remindersResponse.json();
+            
+            if (remindersResponse.ok && remindersData.success) {
+                const now = new Date();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const currentHours = now.getHours();
+                const currentMinutes = now.getMinutes();
+                const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+                
+                const activeReminders = (remindersData.reminders || []).filter(r => {
+                    if (r.status !== 'pending') return false;
+                    const endDate = new Date(r.end_date);
+                    endDate.setHours(0, 0, 0, 0);
+                    return endDate >= today;
+                });
+                
+                const activeCount = activeReminders.length;
+                
+                // Find next dose time
+                let nextDoseTime = null;
+                let minDiff = Infinity;
+                
+                activeReminders.forEach(reminder => {
+                    const times = reminder.time_setters || [];
+                    times.forEach(timeStr => {
+                        const [hours, minutes] = timeStr.split(':').map(Number);
+                        const timeInMinutes = hours * 60 + minutes;
+                        const diff = timeInMinutes - currentTimeInMinutes;
+                        
+                        if (diff > 0 && diff < minDiff) {
+                            minDiff = diff;
+                            nextDoseTime = timeStr.substring(0, 5); // HH:MM format
+                        }
+                    });
+                });
+                
+                // Update Active Meds KPI
+                const kpiLabels = document.querySelectorAll('.rx-kpi-label');
+                kpiLabels.forEach(label => {
+                    if (label.textContent.trim() === 'Active Meds') {
+                        const kpiValue = label.parentElement.querySelector('.rx-kpi-value');
+                        if (kpiValue) kpiValue.textContent = activeCount;
+                    }
+                    if (label.textContent.trim() === 'Next Dose') {
+                        const kpiValue = label.parentElement.querySelector('.rx-kpi-value');
+                        if (kpiValue) kpiValue.textContent = formatTime12Hour(nextDoseTime) || '--:--';
+                    }
+                });
+                
+                // Calculate adherence percentage
+                const allReminders = remindersData.reminders || [];
+                const takenCount = allReminders.filter(r => r.status === 'taken').length;
+                const missedCount = allReminders.filter(r => r.status === 'missed').length;
+                const totalDoses = takenCount + missedCount;
+                
+                const adherencePercent = totalDoses > 0 
+                    ? Math.round((takenCount / totalDoses) * 100) 
+                    : 0;
+                
+                // Update Adherence KPI
+                kpiLabels.forEach(label => {
+                    if (label.textContent.trim() === 'Adherence') {
+                        const kpiValue = label.parentElement.querySelector('.rx-kpi-value');
+                        if (kpiValue) kpiValue.textContent = adherencePercent + '%';
+                    }
+                });
+            }
+            
+            // Fetch prescriptions to count total
+            const prescriptionsResponse = await fetch('/prescriptions/history');
+            const prescriptionsData = await prescriptionsResponse.json();
+            
+            if (prescriptionsResponse.ok && prescriptionsData.success) {
+                const totalCount = (prescriptionsData.prescriptions || []).length;
+                
+                // Update Total Prescriptions KPI
+                const kpiLabels = document.querySelectorAll('.rx-kpi-label');
+                kpiLabels.forEach(label => {
+                    if (label.textContent.trim() === 'Total Prescriptions') {
+                        const kpiValue = label.parentElement.querySelector('.rx-kpi-value');
+                        if (kpiValue) kpiValue.textContent = totalCount;
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Error updating KPIs:', err);
+        }
+    }
+    
+    // Make updateKPIs and formatTime12Hour globally accessible
+    window.updateDashboardKPIs = updateKPIs;
+    window.formatTime12Hour = formatTime12Hour;
+    
+    // Load prescription history function
+    async function loadPrescriptionHistory() {
+        const alert = document.getElementById('historyAlert');
+        const list = document.getElementById('historyList');
+        if (!alert || !list) return;
+
+        try {
+            const response = await fetch('/prescriptions/history');
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'Failed to load history');
+
+            const prescriptions = data.prescriptions || [];
+
+            if (prescriptions.length === 0) {
+                alert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No prescription history found.';
+                list.innerHTML = '';
+                return;
+            }
+
+            alert.innerHTML = `<i class="fa-solid fa-circle-info me-2"></i>You have ${prescriptions.length} prescription${prescriptions.length > 1 ? 's' : ''} in your history.`;
+
+            list.innerHTML = prescriptions.map(prescription => {
+                const uploadDate = new Date(prescription.upload_date);
+                const formattedDate = uploadDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+
+                const medicinesList = prescription.medicines.map(med => `
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <strong><i class="fa-solid fa-capsules me-2" style="color: var(--primary-color);"></i>${med.medicine_name}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small">Dosage: ${med.dosage || 'N/A'}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small">Frequency: ${med.frequency || 'N/A'}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small">Duration: ${med.duration || 'N/A'}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="card border-0 shadow-sm mb-3" style="background: rgba(255,255,255,0.7);">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title fw-bold" style="color: var(--secondary-color);">
+                                        <i class="fa-solid fa-file-medical me-2" style="color: var(--primary-color);"></i>Prescription #${prescription.prescription_id}
+                                    </h5>
+                                    <p class="card-text text-muted small">
+                                        <i class="fa-regular fa-calendar me-1"></i>Uploaded on: ${formattedDate}
+                                    </p>
+                                </div>
+                                <span class="badge bg-secondary">Completed</span>
+                            </div>
+                            <hr>
+                            <h6 class="mb-3" style="color: var(--secondary-color);">Medicines:</h6>
+                            ${medicinesList}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            alert.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading history: ${err.message}`;
+            alert.className = 'alert alert-danger';
+            list.innerHTML = '';
+        }
+    }
 })();
 
 // --- Set Reminder Dynamic Time Setters (Vanilla JS) ---
@@ -143,7 +416,7 @@
 
         activePopup = popupQueue.shift();
         if (reminderAlertMedicine) reminderAlertMedicine.textContent = activePopup.medicine_name || '-';
-        if (reminderAlertTime) reminderAlertTime.textContent = activePopup.matchedTime || '-';
+        if (reminderAlertTime) reminderAlertTime.textContent = window.formatTime12Hour(activePopup.matchedTime) || '-';
         reminderAlertModal.show();
     }
 
@@ -158,6 +431,7 @@
                 times.forEach((timeValue) => {
                     const hhmm = normalizeTime(timeValue);
                     const popupKey = `${todayKey}:${item.reminder_id}:${hhmm}`;
+                    
                     if (hhmm === nowHHMM && !shownPopupKeys.has(popupKey)) {
                         shownPopupKeys.add(popupKey);
                         saveShownPopupKeys();
@@ -240,6 +514,8 @@
             allReminders = data.reminders || [];
             renderReminders(allReminders);
             enqueueDueReminderPopups();
+            // Update KPIs after reminders are loaded
+            if (window.updateDashboardKPIs) window.updateDashboardKPIs();
         } catch (err) {
             remindersList.innerHTML = `<div class="text-danger small">${err.message}</div>`;
         }
@@ -286,10 +562,25 @@
 
         selected.forEach((label) => {
             const row = document.createElement('div');
-            row.className = 'd-flex align-items-center gap-2';
+            row.className = 'd-flex align-items-center gap-2 mb-2';
             row.innerHTML = `
                 <span style="min-width: 90px; color: var(--secondary-color); font-weight: 600;">${label}</span>
-                <input type="time" class="form-control reminder-time" name="time_${label.toLowerCase()}" required />
+                <div class="d-flex gap-1">
+                    <select class="form-select form-select-sm reminder-hour-${label.toLowerCase()}" style="width: 70px;" required>
+                        <option value="">HH</option>
+                        ${Array.from({length: 12}, (_, i) => i + 1).map(h => `<option value="${h}">${String(h).padStart(2, '0')}</option>`).join('')}
+                    </select>
+                    <span class="align-self-center">:</span>
+                    <select class="form-select form-select-sm reminder-minute-${label.toLowerCase()}" style="width: 70px;" required>
+                        <option value="">MM</option>
+                        ${Array.from({length: 60}, (_, i) => i).map(m => `<option value="${m}">${String(m).padStart(2, '0')}</option>`).join('')}
+                    </select>
+                    <select class="form-select form-select-sm reminder-period-${label.toLowerCase()}" style="width: 70px;" required>
+                        <option value="">--</option>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
             `;
             timeSettersList.appendChild(row);
         });
@@ -320,8 +611,27 @@
         }
 
         const timeSetters = selectedFrequencies.map((label) => {
-            const input = reminderForm.querySelector(`input[name="time_${label.toLowerCase()}"]`);
-            return input ? input.value : '';
+            const hourSelect = reminderForm.querySelector(`.reminder-hour-${label.toLowerCase()}`);
+            const minuteSelect = reminderForm.querySelector(`.reminder-minute-${label.toLowerCase()}`);
+            const periodSelect = reminderForm.querySelector(`.reminder-period-${label.toLowerCase()}`);
+            
+            if (!hourSelect || !minuteSelect || !periodSelect) return '';
+            
+            const hour = parseInt(hourSelect.value);
+            const minute = parseInt(minuteSelect.value);
+            const period = periodSelect.value;
+            
+            if (!hour || isNaN(minute) || !period) return '';
+            
+            // Convert 12-hour to 24-hour format
+            let hour24 = hour;
+            if (period === 'PM' && hour !== 12) {
+                hour24 = hour + 12;
+            } else if (period === 'AM' && hour === 12) {
+                hour24 = 0;
+            }
+            
+            return `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
         });
 
         if (timeSetters.some((value) => !value)) {
@@ -408,6 +718,8 @@
     renderTimeSetters();
     setActiveFilterButton();
     loadReminders();
+    
+    // Check for due reminders every 15 seconds
     setInterval(enqueueDueReminderPopups, 15000);
 })();
 
