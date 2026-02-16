@@ -43,7 +43,7 @@
                 <li><a href="#" class="nav-btn active" aria-current="page">Dashboard</a></li>
                 <li><a href="#" class="nav-btn" id="rxTopbarProfile">Profile</a></li>
                 <li><a href="#" class="nav-btn" id="rxTopbarSettings">Settings</a></li>
-                <li><a href="/login" class="nav-btn outline">Logout</a></li>
+                <li><a href="/logout" class="nav-btn outline">Logout</a></li>
             </ul>
 
             <div class="rx-user-pill" role="group" aria-label="Signed in user">
@@ -62,7 +62,7 @@
         <div class="row mb-4">
             <div class="col-12 text-center text-md-start px-md-5">
                 <h2 class="rx-page-title">Welcome back, <span class="rx-accent">{{ username|default('User', true) }}</span></h2>
-                <p class="rx-page-subtitle">Your health journey continues. Last login: <span class="rx-accent">Feb 05, 2026</span></p>
+                <p class="rx-page-subtitle">Your health journey continues here.</p>
             </div>
         </div>
 
@@ -82,7 +82,7 @@
                     <div class="rx-kpi-icon"><i class="fa-solid fa-bell"></i></div>
                     <div class="rx-kpi-body">
                         <div class="rx-kpi-label">Next Dose</div>
-                        <div class="rx-kpi-value">08:00</div>
+                        <div class="rx-kpi-value" style="font-size: 1.5rem;">--:-- --</div>
                     </div>
                 </div>
             </div>
@@ -91,16 +91,16 @@
                     <div class="rx-kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
                     <div class="rx-kpi-body">
                         <div class="rx-kpi-label">Adherence</div>
-                        <div class="rx-kpi-value">85%</div>
+                        <div class="rx-kpi-value">0%</div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-lg-3">
                 <div class="rx-kpi">
-                    <div class="rx-kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-file-medical"></i></div>
                     <div class="rx-kpi-body">
-                        <div class="rx-kpi-label">Alerts</div>
-                        <div class="rx-kpi-value">1</div>
+                        <div class="rx-kpi-label">Total Prescriptions</div>
+                        <div class="rx-kpi-value">0</div>
                     </div>
                 </div>
             </div>
@@ -116,34 +116,13 @@
                     <div id="view-active-prescription" class="dashboard-content-panel active" role="region" aria-label="Active Prescription">
                         <h3 class="mb-4"
                             style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
-                            <i class="fa-solid fa-file-medical me-2"></i>Active Prescription
+                            <i class="fa-solid fa-file-medical me-2"></i>Active Medications
                         </h3>
-                        <div class="alert alert-info"
+                        <div id="activeMedicationsAlert" class="alert alert-info"
                             style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
-                            <i class="fa-solid fa-circle-info me-2"></i>You have 1 active prescription.
+                            <i class="fa-solid fa-circle-info me-2"></i>Loading active medications...
                         </div>
-                        <!-- Mock Content -->
-                        <div class="card border-0 shadow-sm mb-3" style="background: rgba(255,255,255,0.7);">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h5 class="card-title fw-bold" style="color: var(--secondary-color);">Dr.
-                                            Smith's Prescription</h5>
-                                        <p class="card-text text-muted small"><i
-                                                class="fa-regular fa-calendar me-1"></i>Prescribed on: Jan 20, 2026</p>
-                                    </div>
-                                    <span class="badge bg-success">Active</span>
-                                </div>
-                                <hr>
-                                <div class="row">
-                                    <div class="col-md-6 mb-2"><strong><i class="fa-solid fa-capsules me-2"
-                                        style="color: var(--primary-color);"></i>Amoxicillin</strong>
-                                        <button type="button" class="btn btn-sm text-white ms-2" style="background-color: var(--primary-color); border-color: var(--primary-color);">Find</button>
-                                    - 500mg, Twice Daily</div>
-                                </div>
-                                <div class="mt-3 text-end"></div>
-                            </div>
-                        </div>
+                        <div id="activeMedicationsList"></div>
                     </div>
 
                     <!-- Set Medicine Reminder View -->
@@ -247,70 +226,13 @@
                     <div id="view-history" class="dashboard-content-panel" role="region" aria-label="History">
                         <h3 class="mb-4"
                             style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
-                            <i class="fa-solid fa-clock-rotate-left me-2"></i>History
+                            <i class="fa-solid fa-clock-rotate-left me-2"></i>Prescription History
                         </h3>
-                        <div class="table-responsive">
-                            <table class="table table-borderless align-middle"
-                                style="background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden;">
-                                <thead style="background-color: var(--secondary-color); color: white;">
-                                    <tr>
-                                        <th class="py-3 ps-3">Date</th>
-                                        <th>Doctor</th>
-                                        <th>Diagnosis</th>
-                                        <th class="text-end pe-3">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold text-muted">Dec 12, 2025</td>
-                                        <td>Dr. Emily White</td>
-                                        <td>Viral Fever</td>
-                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i
-                                                    class="fa-solid fa-eye"></i></button></td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold text-muted">Nov 05, 2025</td>
-                                        <td>Dr. Alan Grant</td>
-                                        <td>Annual Checkup</td>
-                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i
-                                                    class="fa-solid fa-eye"></i></button></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="historyAlert" class="alert alert-info"
+                            style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
+                            <i class="fa-solid fa-circle-info me-2"></i>Loading prescription history...
                         </div>
-                    </div>
-
-                    <!-- Prescription Alert View -->
-                    <div id="view-alerts" class="dashboard-content-panel" role="region" aria-label="Prescription Alerts">
-                        <h3 class="mb-4"
-                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
-                            <i class="fa-solid fa-triangle-exclamation me-2"></i>Prescription Alerts
-                        </h3>
-
-                        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
-                            <i class="fa-solid fa-triangle-exclamation fa-xl me-3"></i>
-                            <div>
-                                <strong>Drug Interaction Warning</strong>
-                                <p class="mb-0 small">Potential interaction detected between Aspirin and Ibuprofen.</p>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-primary d-flex align-items-center mb-3" role="alert">
-                            <i class="fa-solid fa-repeat fa-xl me-3"></i>
-                            <div>
-                                <strong>Refill Reminder</strong>
-                                <p class="mb-0 small">Your Metformin supply will run out in 3 days. <a href="#"
-                                        class="alert-link">Order Refill</a></p>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
-                            <i class="fa-solid fa-check-circle fa-xl me-3"></i>
-                            <div>
-                                <strong>Prescription Verified</strong>
-                                <p class="mb-0 small">Dr. Smith has verified your recent upload.</p>
-                            </div>
-                        </div>
+                        <div id="historyList"></div>
                     </div>
 
                     <!-- User Profile View -->
@@ -366,7 +288,7 @@
                     <div class="rx-action-list" id="rxActionList">
                         <button type="button" class="dashboard-sidebar-item active" data-view="active-prescription">
                             <i class="fa-solid fa-file-medical"></i>
-                            <span>Active Prescription</span>
+                            <span>Active Medication</span>
                         </button>
 
                         <button type="button" class="dashboard-sidebar-item" data-view="set-reminder">
@@ -382,11 +304,6 @@
                         <button type="button" class="dashboard-sidebar-item" data-view="history">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                             <span>History</span>
-                        </button>
-
-                        <button type="button" class="dashboard-sidebar-item" data-view="alerts">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            <span>Prescription Alerts</span>
                         </button>
 
                         <button type="button" class="dashboard-sidebar-item" data-view="profile">

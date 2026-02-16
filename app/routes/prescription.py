@@ -135,3 +135,61 @@ def upload_prescription():
         # Clean up the temporary file
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+@bp.route("/prescriptions/history", methods=["GET"])
+@login_required
+def get_prescription_history():
+    """Fetch all prescriptions for the logged-in user grouped by prescription_id."""
+    conn = None
+    try:
+        conn = get_connection()
+        user_id = session.get("user_id")
+        
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 
+                    prescription_id,
+                    medicine_name,
+                    dosage,
+                    frequency,
+                    duration,
+                    created_at
+                FROM prescriptions
+                WHERE user_id = %s
+                ORDER BY created_at DESC, prescription_id DESC
+                """,
+                (user_id,)
+            )
+            rows = cur.fetchall()
+        
+        # Group by prescription_id
+        prescriptions = {}
+        for row in rows:
+            prescription_id = row[0]
+            if prescription_id not in prescriptions:
+                prescriptions[prescription_id] = {
+                    "prescription_id": prescription_id,
+                    "upload_date": row[5].isoformat() if hasattr(row[5], "isoformat") else str(row[5]),
+                    "medicines": []
+                }
+            
+            prescriptions[prescription_id]["medicines"].append({
+                "medicine_name": row[1],
+                "dosage": row[2],
+                "frequency": row[3],
+                "duration": row[4]
+            })
+        
+        # Convert to list
+        prescription_list = list(prescriptions.values())
+        
+        return jsonify({"success": True, "prescriptions": prescription_list}), 200
+        
+    except Exception as e:
+        print(f"Error fetching prescription history: {e}")
+        return jsonify({"success": False, "error": "Failed to fetch prescription history"}), 500
+    finally:
+        if conn:
+            conn.close()

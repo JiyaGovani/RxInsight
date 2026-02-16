@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, redirect, session
+from flask import Flask, render_template, redirect, session, send_from_directory
 from dotenv import load_dotenv
 
 
@@ -23,6 +23,15 @@ app.register_blueprint(reminder_bp)
 @app.route("/")
 def home_page():
     return render_template("index.html")
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(
+        app.static_folder,
+        "images/logo.png",
+        mimetype="image/png"
+    )
 
 @app.route("/dashboard")
 def user_dashboard():

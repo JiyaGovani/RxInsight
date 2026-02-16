@@ -50,7 +50,7 @@
       const panel = btn.dataset.panel;
       if (panel === 'logout') {
         // UI only: redirect to login if available.
-        window.location.href = '/login';
+        window.location.href = '/logout';
         return;
       }
 
@@ -71,7 +71,7 @@
   if (topbarLogout) {
     topbarLogout.addEventListener('click', (e) => {
       e.preventDefault();
-      window.location.href = '/login';
+      window.location.href = '/logout';
     });
   }
 

@@ -2,7 +2,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, send_file, session
+from flask import Blueprint, jsonify, request, send_file, session, redirect
 
 from app.dao.user_dao import UserDAO
 from app.models.user import User
@@ -66,14 +66,22 @@ def _get_db_info(conn):
 @bp.route("/login")
 @bp.route("/login/")
 def login_page():
-    """Serve the login/registration page as a plain HTML file (no Jinja)."""
-    # Treat visiting the login page as a logout/reset.
+    """Serve the login/registration page as a plain HTML file."""
+    if session.get("user_id"):
+        return redirect("/admin" if session.get("role") == 1 else "/dashboard")
+
+    templates_dir = Path(__file__).resolve().parents[1] / "templates"
+    return send_file(templates_dir / "login.html", mimetype="text/html")
+
+
+@bp.route("/logout")
+def logout():
+    """Clear session and redirect to home page."""
     try:
         session.clear()
     except Exception:
         pass
-    templates_dir = Path(__file__).resolve().parents[1] / "templates"
-    return send_file(templates_dir / "login.html", mimetype="text/html")
+    return redirect("/")
 
 
 @bp.route("/auth/login", methods=["POST"])
