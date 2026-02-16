@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, render_template, redirect, session
+from flask import Flask, render_template, redirect, session, request
 from dotenv import load_dotenv
 
 
@@ -23,6 +23,17 @@ app.register_blueprint(reminder_bp)
 @app.route("/")
 def home_page():
     return render_template("index.html")
+
+
+@app.route("/upload")
+def upload_entry():
+    if not session.get("user_id"):
+        return redirect("/login?next=/upload")
+
+    if session.get("role") == 1:
+        return redirect("/admin")
+
+    return redirect("/dashboard")
 
 @app.route("/dashboard")
 def user_dashboard():

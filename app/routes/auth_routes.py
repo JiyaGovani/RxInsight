@@ -1,8 +1,8 @@
 
 from datetime import datetime
-from pathlib import Path
+from urllib.parse import urlparse
 
-from flask import Blueprint, jsonify, request, send_file, session
+from flask import Blueprint, jsonify, request, session, render_template, redirect
 
 from app.dao.user_dao import UserDAO
 from app.models.user import User
@@ -13,6 +13,14 @@ bp = Blueprint("auth", __name__)
 
 
 _users_table_checked = False
+
+
+def _is_safe_next_url(next_url):
+    if not next_url:
+        return False
+
+    parsed = urlparse(next_url)
+    return parsed.scheme == "" and parsed.netloc == "" and next_url.startswith("/")
 
 
 def ensure_users_table_exists(conn):
@@ -66,14 +74,23 @@ def _get_db_info(conn):
 @bp.route("/login")
 @bp.route("/login/")
 def login_page():
-    """Serve the login/registration page as a plain HTML file (no Jinja)."""
-    # Treat visiting the login page as a logout/reset.
-    try:
-        session.clear()
-    except Exception:
-        pass
-    templates_dir = Path(__file__).resolve().parents[1] / "templates"
-    return send_file(templates_dir / "login.html", mimetype="text/html")
+    """Serve login page and preserve redirect target via `next`."""
+    if session.get("user_id"):
+        if session.get("role") == 1:
+            return redirect("/admin")
+        return redirect("/dashboard")
+
+    next_url = (request.args.get("next") or "").strip()
+    if not _is_safe_next_url(next_url):
+        next_url = ""
+
+    return render_template("login.html", next_url=next_url)
+
+
+@bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 
 @bp.route("/auth/login", methods=["POST"])
@@ -83,6 +100,7 @@ def login():
 
     identifier = str(data.get("identifier", "")).strip()
     password = str(data.get("password", ""))
+    next_url = str(data.get("next", "")).strip()
     if not identifier or not password:
         return jsonify(success=False, message="Missing identifier or password"), 400
 
@@ -109,7 +127,8 @@ def login():
         session["username"] = getattr(user, "username", "")
         session["role"] = getattr(user, "role", 0)
 
-        redirect_url = "/admin" if getattr(user, "role", 0) == 1 else "/dashboard"
+        default_redirect = "/admin" if getattr(user, "role", 0) == 1 else "/dashboard"
+        redirect_url = next_url if _is_safe_next_url(next_url) else default_redirect
         return jsonify(success=True, message="Login successful", redirect=redirect_url), 200
     except Exception:
         try:

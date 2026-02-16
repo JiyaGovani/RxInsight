@@ -20,6 +20,7 @@
                 <div class="form-box login">
                 <form id="loginForm" class="w-100" action="/auth/login" method="post">
                     <h1 class="mb-4">Login</h1>
+                    <input type="hidden" name="next" value="{{ next_url or '' }}">
 
                     <div class="form-floating mb-3 input-box">
                         <input id="loginUsername" name="identifier" type="text" class="form-control" placeholder="Username" required>

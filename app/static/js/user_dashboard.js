@@ -33,7 +33,7 @@
     }
 
     function switchView(viewName) {
-        if (viewName === 'logout') { window.location.href = '/login'; return; }
+        if (viewName === 'logout') { window.location.href = '/logout'; return; }
 
         document.querySelectorAll('.dashboard-content-panel').forEach(panel => {
             panel.classList.toggle('active', panel.id === 'view-' + viewName);
