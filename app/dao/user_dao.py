@@ -106,3 +106,36 @@ class UserDAO:
         except Exception:
             self.conn.rollback()
             raise
+
+    def update_profile(self, user_id, username, email, contact_number, emergency_contact, date_of_birth, weight, height):
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET username = %s,
+                        email = %s,
+                        contact_number = %s,
+                        emergency_contact = %s,
+                        date_of_birth = %s,
+                        weight = %s,
+                        height = %s
+                    WHERE user_id = %s
+                    """,
+                    (
+                        username,
+                        email,
+                        contact_number,
+                        emergency_contact,
+                        date_of_birth,
+                        weight,
+                        height,
+                        user_id,
+                    ),
+                )
+                updated_rows = cur.rowcount
+            self.conn.commit()
+            return updated_rows > 0
+        except Exception:
+            self.conn.rollback()
+            raise

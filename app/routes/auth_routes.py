@@ -143,6 +143,117 @@ def dbinfo():
         return jsonify(success=False, message="Could not read DB info"), 500
 
 
+def _serialize_user_profile(user):
+    return {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "contact_number": user.contact_number,
+        "emergency_contact": user.emergency_contact,
+        "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+        "weight": float(user.weight) if user.weight is not None else None,
+        "height": float(user.height) if user.height is not None else None,
+        "role": user.role,
+    }
+
+
+@bp.route("/auth/profile", methods=["GET"])
+def get_profile():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify(success=False, message="Unauthorized"), 401
+
+    user_dao = UserDAO()
+
+    try:
+        ensure_users_table_exists(user_dao.conn)
+        user = user_dao.find_by_id(user_id)
+        if not user:
+            return jsonify(success=False, message="User not found"), 404
+        return jsonify(success=True, user=_serialize_user_profile(user)), 200
+    except Exception:
+        try:
+            user_dao.conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, message="Failed to load profile"), 500
+
+
+@bp.route("/auth/profile", methods=["PUT"])
+def update_profile():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify(success=False, message="Unauthorized"), 401
+
+    data = _get_payload()
+
+    required_fields = [
+        "username",
+        "email",
+        "contact_number",
+        "emergency_contact",
+        "date_of_birth",
+        "weight",
+        "height",
+    ]
+    missing = [f for f in required_fields if str(data.get(f, "")).strip() == ""]
+    if missing:
+        return jsonify(success=False, message=f"Missing fields: {', '.join(missing)}"), 400
+
+    username = str(data.get("username", "")).strip()
+    email = str(data.get("email", "")).strip()
+    contact_number = str(data.get("contact_number", "")).strip()
+    emergency_contact = str(data.get("emergency_contact", "")).strip()
+
+    try:
+        date_of_birth = datetime.strptime(str(data.get("date_of_birth", "")).strip(), "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify(success=False, message="Invalid date_of_birth (use YYYY-MM-DD)"), 400
+
+    try:
+        weight = float(str(data.get("weight", "")).strip())
+        height = float(str(data.get("height", "")).strip())
+    except ValueError:
+        return jsonify(success=False, message="Invalid weight/height"), 400
+
+    user_dao = UserDAO()
+    try:
+        ensure_users_table_exists(user_dao.conn)
+
+        existing_by_username = user_dao.find_by_username(username)
+        if existing_by_username and existing_by_username.user_id != user_id:
+            return jsonify(success=False, message="Username already in use"), 409
+
+        existing_by_email = user_dao.find_by_email(email)
+        if existing_by_email and existing_by_email.user_id != user_id:
+            return jsonify(success=False, message="Email already in use"), 409
+
+        updated = user_dao.update_profile(
+            user_id,
+            username,
+            email,
+            contact_number,
+            emergency_contact,
+            date_of_birth,
+            weight,
+            height,
+        )
+
+        if not updated:
+            return jsonify(success=False, message="User not found"), 404
+
+        session["username"] = username
+
+        user = user_dao.find_by_id(user_id)
+        return jsonify(success=True, message="Profile updated", user=_serialize_user_profile(user)), 200
+    except Exception:
+        try:
+            user_dao.conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, message="Failed to update profile"), 500
+
+
 def _get_payload():
     """Accept JSON (fetch) or form data (normal form post)."""
     if request.is_json:
