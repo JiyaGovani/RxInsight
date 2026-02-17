@@ -52,6 +52,10 @@
         if (viewName === 'history') {
             loadPrescriptionHistory();
         }
+
+        if (viewName === 'profile' && typeof window.loadUserProfile === 'function') {
+            window.loadUserProfile();
+        }
     }
 
     if (navToggle) {
@@ -70,10 +74,12 @@
     }
 
     // Hook topbar shortcuts
+    const topbarActiveMeds = document.getElementById('rxTopbarActiveMeds');
+    if (topbarActiveMeds) topbarActiveMeds.addEventListener('click', (e) => { e.preventDefault(); switchView('active-prescription'); });
+    const topbarReminders = document.getElementById('rxTopbarReminders');
+    if (topbarReminders) topbarReminders.addEventListener('click', (e) => { e.preventDefault(); switchView('set-reminder'); });
     const topbarProfile = document.getElementById('rxTopbarProfile');
     if (topbarProfile) topbarProfile.addEventListener('click', (e) => { e.preventDefault(); switchView('profile'); });
-    const topbarSettings = document.getElementById('rxTopbarSettings');
-    if (topbarSettings) topbarSettings.addEventListener('click', (e) => { e.preventDefault(); switchView('profile'); });
 
     // Close mobile menu on resize up
     window.addEventListener('resize', () => {
@@ -131,10 +137,10 @@
                             <hr>
                             <div class="row">
                                 <div class="col-md-6 mb-2">
-                                    <strong>Frequency:</strong> ${frequencies}
+                                    <strong>Time Slots:</strong> ${frequencies}
                                 </div>
                                 <div class="col-md-6 mb-2">
-                                    <strong>Times:</strong> ${times}
+                                    <strong>Time:</strong> ${times}
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <strong>End Date:</strong> ${med.end_date}
@@ -307,7 +313,7 @@
                             <span class="text-muted small">Dosage: ${med.dosage || 'N/A'}</span>
                         </div>
                         <div class="col-md-6">
-                            <span class="text-muted small">Frequency: ${med.frequency || 'N/A'}</span>
+                            <span class="text-muted small">Time Slots: ${med.frequency || 'N/A'}</span>
                         </div>
                         <div class="col-md-6">
                             <span class="text-muted small">Duration: ${med.duration || 'N/A'}</span>
@@ -327,7 +333,6 @@
                                         <i class="fa-regular fa-calendar me-1"></i>Uploaded on: ${formattedDate}
                                     </p>
                                 </div>
-                                <span class="badge bg-secondary">Completed</span>
                             </div>
                             <hr>
                             <h6 class="mb-3" style="color: var(--secondary-color);">Medicines:</h6>
@@ -342,6 +347,112 @@
             list.innerHTML = '';
         }
     }
+})();
+
+// --- Profile Load/Update Logic ---
+(function () {
+    const profileForm = document.getElementById('profileForm');
+    const profileMsg = document.getElementById('profileMsg');
+    const profileUsername = document.getElementById('profileUsername');
+    const profileEmail = document.getElementById('profileEmail');
+    const profileContactNumber = document.getElementById('profileContactNumber');
+    const profileEmergencyContact = document.getElementById('profileEmergencyContact');
+    const profileDateOfBirth = document.getElementById('profileDateOfBirth');
+    const profileWeight = document.getElementById('profileWeight');
+    const profileHeight = document.getElementById('profileHeight');
+    const navbarUsername = document.getElementById('rxNavbarUsername');
+    const welcomeUsername = document.getElementById('rxWelcomeUsername');
+
+    if (!profileForm) return;
+
+    let profileLoadedOnce = false;
+
+    function setProfileMessage(text, color) {
+        if (!profileMsg) return;
+        profileMsg.textContent = text || '';
+        profileMsg.style.color = color || '';
+    }
+
+    function mapRole(role) {
+        return Number(role) === 1 ? 'Admin' : 'User';
+    }
+
+    function fillProfileForm(user) {
+        if (!user) return;
+        if (profileUsername) profileUsername.value = user.username ?? '';
+        if (profileEmail) profileEmail.value = user.email ?? '';
+        if (profileContactNumber) profileContactNumber.value = user.contact_number ?? '';
+        if (profileEmergencyContact) profileEmergencyContact.value = user.emergency_contact ?? '';
+        if (profileDateOfBirth) profileDateOfBirth.value = user.date_of_birth ?? '';
+        if (profileWeight) profileWeight.value = user.weight ?? '';
+        if (profileHeight) profileHeight.value = user.height ?? '';
+
+        const liveUsername = user.username ?? '';
+        if (navbarUsername) navbarUsername.textContent = liveUsername;
+        if (welcomeUsername) welcomeUsername.textContent = liveUsername;
+    }
+
+    async function loadUserProfile(force = false) {
+        if (profileLoadedOnce && !force) return;
+
+        try {
+            setProfileMessage('Loading profile...', '#6c757d');
+            const response = await fetch('/auth/profile');
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Failed to load profile');
+            }
+
+            fillProfileForm(data.user);
+            profileLoadedOnce = true;
+            setProfileMessage('');
+        } catch (err) {
+            setProfileMessage(`Error: ${err.message}`, '#dc3545');
+        }
+    }
+
+    window.loadUserProfile = loadUserProfile;
+
+    profileForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        if (!profileForm.checkValidity()) {
+            profileForm.reportValidity();
+            return;
+        }
+
+        const payload = {
+            username: profileUsername ? profileUsername.value.trim() : '',
+            email: profileEmail ? profileEmail.value.trim() : '',
+            contact_number: profileContactNumber ? profileContactNumber.value.trim() : '',
+            emergency_contact: profileEmergencyContact ? profileEmergencyContact.value.trim() : '',
+            date_of_birth: profileDateOfBirth ? profileDateOfBirth.value : '',
+            weight: profileWeight ? Number(profileWeight.value) : '',
+            height: profileHeight ? Number(profileHeight.value) : '',
+        };
+
+        try {
+            setProfileMessage('Saving changes...', '#6c757d');
+            const response = await fetch('/auth/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Failed to update profile');
+            }
+
+            fillProfileForm(data.user);
+            profileLoadedOnce = true;
+            setProfileMessage('Profile updated successfully.', '#198754');
+        } catch (err) {
+            setProfileMessage(`Error: ${err.message}`, '#dc3545');
+        }
+    });
 })();
 
 // --- Set Reminder Dynamic Time Setters (Vanilla JS) ---
@@ -368,6 +479,7 @@
     let allReminders = [];
     let popupQueue = [];
     let activePopup = null;
+    let reminderBeepTimer = null;
 
     const shownPopupKeys = new Set(
         JSON.parse(sessionStorage.getItem('shownReminderPopupKeys') || '[]')
@@ -376,6 +488,71 @@
     const reminderAlertModal = reminderAlertModalEl && window.bootstrap
         ? new window.bootstrap.Modal(reminderAlertModalEl)
         : null;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const reminderAudioContext = AudioContextClass ? new AudioContextClass() : null;
+
+    function unlockReminderAudio() {
+        if (reminderAudioContext && reminderAudioContext.state === 'suspended') {
+            reminderAudioContext.resume().catch(() => { });
+        }
+    }
+
+    ['click', 'keydown', 'touchstart'].forEach((eventName) => {
+        window.addEventListener(eventName, unlockReminderAudio, { once: true, passive: true });
+    });
+
+    async function playReminderSound() {
+        if (!reminderAudioContext) return;
+
+        if (reminderAudioContext.state === 'suspended') {
+            try {
+                await reminderAudioContext.resume();
+            } catch {
+                return;
+            }
+        }
+
+        const gainNode = reminderAudioContext.createGain();
+        const osc1 = reminderAudioContext.createOscillator();
+        const osc2 = reminderAudioContext.createOscillator();
+        const startAt = reminderAudioContext.currentTime + 0.01;
+
+        gainNode.gain.setValueAtTime(0.0001, startAt);
+        gainNode.gain.exponentialRampToValueAtTime(0.45, startAt + 0.03);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.28);
+        gainNode.gain.setValueAtTime(0.0001, startAt + 0.32);
+        gainNode.gain.exponentialRampToValueAtTime(0.45, startAt + 0.35);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.62);
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(1046.5, startAt);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, startAt + 0.32);
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(reminderAudioContext.destination);
+
+        osc1.start(startAt);
+        osc1.stop(startAt + 0.29);
+        osc2.start(startAt + 0.32);
+        osc2.stop(startAt + 0.63);
+    }
+
+    function stopReminderBeepLoop() {
+        if (reminderBeepTimer) {
+            clearInterval(reminderBeepTimer);
+            reminderBeepTimer = null;
+        }
+    }
+
+    function startReminderBeepLoop() {
+        stopReminderBeepLoop();
+        playReminderSound().catch(() => { });
+        reminderBeepTimer = setInterval(() => {
+            playReminderSound().catch(() => { });
+        }, 900);
+    }
 
     function saveShownPopupKeys() {
         sessionStorage.setItem('shownReminderPopupKeys', JSON.stringify(Array.from(shownPopupKeys)));
@@ -488,8 +665,8 @@
                         <span class="badge ${getStatusBadgeClass(item.status)}">${item.status}</span>
                     </div>
                     <div class="small text-muted">Days: ${item.number_of_days} | ${item.start_date} to ${item.end_date}</div>
-                    <div class="small text-muted">Frequency: ${frequencies}</div>
-                    <div class="small text-muted">Times: ${times}</div>
+                    <div class="small text-muted">Time Slots: ${frequencies}</div>
+                    <div class="small text-muted">Time: ${times}</div>
                     ${actions}
                 </div>
             `;
@@ -604,7 +781,7 @@
 
         if (selectedFrequencies.length === 0) {
             if (reminderMsg) {
-                reminderMsg.textContent = 'Please select at least one frequency.';
+                reminderMsg.textContent = 'Please select at least one time slot.';
                 reminderMsg.style.color = '#dc3545';
             }
             return;
@@ -636,7 +813,7 @@
 
         if (timeSetters.some((value) => !value)) {
             if (reminderMsg) {
-                reminderMsg.textContent = 'Please set time for each selected frequency.';
+                reminderMsg.textContent = 'Please set time for each selected time slot.';
                 reminderMsg.style.color = '#dc3545';
             }
             return;
@@ -681,8 +858,15 @@
         }
     });
 
+    if (reminderAlertModalEl) {
+        reminderAlertModalEl.addEventListener('shown.bs.modal', function () {
+            startReminderBeepLoop();
+        });
+    }
+
     if (reminderAlertTakenBtn && reminderAlertModalEl) {
         reminderAlertTakenBtn.addEventListener('click', async function () {
+            stopReminderBeepLoop();
             if (!activePopup) return;
             try {
                 await updateReminderStatus(activePopup.reminder_id, 'taken');
@@ -698,6 +882,7 @@
         });
 
         reminderAlertModalEl.addEventListener('hidden.bs.modal', async function () {
+            stopReminderBeepLoop();
             if (activePopup) {
                 try {
                     await updateReminderStatus(activePopup.reminder_id, 'missed');

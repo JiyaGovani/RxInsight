@@ -40,17 +40,16 @@
 
         <div class="rx-topbar-right" id="rxNavMenu">
             <ul class="nav-links rx-nav-links">
-                <li><a href="#" class="nav-btn active" aria-current="page">Dashboard</a></li>
+                <li><a href="#" class="nav-btn" id="rxTopbarReminders">Reminders</a></li>
                 <li><a href="#" class="nav-btn" id="rxTopbarProfile">Profile</a></li>
-                <li><a href="#" class="nav-btn" id="rxTopbarSettings">Settings</a></li>
                 <li><a href="/logout" class="nav-btn outline">Logout</a></li>
             </ul>
 
             <div class="rx-user-pill" role="group" aria-label="Signed in user">
                 <div class="rx-user-avatar" aria-hidden="true"><i class="fa-solid fa-user"></i></div>
                 <div class="rx-user-meta">
-                    <div class="rx-user-name">{{ username|default('User', true) }}</div>
-                    <div class="rx-user-sub">Care Plan</div>
+                    <div class="rx-user-name" id="rxNavbarUsername">{{ username|default('User', true) }}</div>
+                    <div class="rx-user-sub">Your Account</div>
                 </div>
             </div>
         </div>
@@ -61,7 +60,7 @@
         <!-- Welcome Section -->
         <div class="row mb-4">
             <div class="col-12 text-center text-md-start px-md-5">
-                <h2 class="rx-page-title">Welcome back, <span class="rx-accent">{{ username|default('User', true) }}</span></h2>
+                <h2 class="rx-page-title">Welcome back, <span class="rx-accent" id="rxWelcomeUsername">{{ username|default('User', true) }}</span></h2>
                 <p class="rx-page-subtitle">Your health journey continues here.</p>
             </div>
         </div>
@@ -144,7 +143,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold" style="color: var(--secondary-color);">Frequency</label>
+                                <label class="form-label fw-bold" style="color: var(--secondary-color);">Time Slots</label>
                                 <div class="d-flex flex-wrap gap-3" id="frequencyGroup">
                                     <div class="form-check">
                                         <input class="form-check-input reminder-frequency" type="checkbox" value="Morning" id="freqMorning">
@@ -168,7 +167,7 @@
                             <div class="mb-3" id="timeSettersContainer">
                                 <label class="form-label fw-bold" style="color: var(--secondary-color);">Time Setters</label>
                                 <div id="timeSettersList" class="d-flex flex-column gap-2"></div>
-                                <small class="text-muted">Select frequency to generate time setters.</small>
+                                <small class="text-muted">Select time slots to generate time setters.</small>
                             </div>
 
                             <div class="mb-3 form-check">
@@ -241,7 +240,7 @@
                             style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
                             <i class="fa-solid fa-user-pen me-2"></i>Update Profile
                         </h3>
-                        <form class="p-3">
+                        <form id="profileForm" class="p-3">
                             <div class="text-center mb-4">
                                 <div
                                     style="width: 100px; height: 100px; background: #ddd; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #fff; background-color: var(--secondary-color);">
@@ -251,26 +250,39 @@
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Full Name</label>
-                                    <input type="text" class="form-control" value="John Doe">
+                                    <label class="form-label text-muted">Username</label>
+                                    <input type="text" class="form-control" id="profileUsername" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-muted">Email</label>
-                                    <input type="email" class="form-control" value="john@example.com" disabled>
+                                    <input type="email" class="form-control" id="profileEmail" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Phone</label>
-                                    <input type="tel" class="form-control" value="+1 234 567 8900">
+                                    <label class="form-label text-muted">Contact Number</label>
+                                    <input type="tel" class="form-control" id="profileContactNumber" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Emergency Contact</label>
+                                    <input type="tel" class="form-control" id="profileEmergencyContact" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-muted">Date of Birth</label>
-                                    <input type="date" class="form-control" value="1990-01-01">
+                                    <input type="date" class="form-control" id="profileDateOfBirth" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Weight (kg)</label>
+                                    <input type="number" class="form-control" id="profileWeight" step="0.01" min="0" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Height (cm)</label>
+                                    <input type="number" class="form-control" id="profileHeight" step="0.01" min="0" required>
                                 </div>
                             </div>
                             <div class="text-end">
                                 <button type="submit" class="btn text-white px-4"
                                     style="background-color: var(--primary-color);">Save Changes</button>
                             </div>
+                            <div id="profileMsg" class="small mt-2"></div>
                         </form>
                     </div>
 
