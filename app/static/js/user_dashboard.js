@@ -81,6 +81,11 @@
     const topbarProfile = document.getElementById('rxTopbarProfile');
     if (topbarProfile) topbarProfile.addEventListener('click', (e) => { e.preventDefault(); switchView('profile'); });
 
+    const initialView = new URLSearchParams(window.location.search).get('view');
+    if (initialView) {
+        switchView(initialView);
+    }
+
     // Close mobile menu on resize up
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 768) setNavOpen(false);

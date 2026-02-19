@@ -14,10 +14,12 @@ app.secret_key = os.getenv("SECRET_KEY", "change-me")  # fetch from environment
 from app.routes.auth_routes import bp as auth_bp
 from app.routes.prescription import bp as prescription_bp
 from app.routes.reminder import bp as reminder_bp
+from app.routes.medicine import bp as medicine_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(prescription_bp)
 app.register_blueprint(reminder_bp)
+app.register_blueprint(medicine_bp)
 
 
 @app.route("/")
@@ -50,6 +52,15 @@ def admin_dashboard():
     if session.get("role") != 1:
         return redirect("/dashboard")
     return render_template("admin/dashboard.html", username=session.get("username"))
+
+
+@app.route("/upload")
+def upload_entry():
+    if not session.get("user_id"):
+        return redirect("/login")
+    if session.get("role") == 1:
+        return redirect("/admin")
+    return redirect("/dashboard?view=upload-prescription")
 
 
 if __name__ == "__main__":

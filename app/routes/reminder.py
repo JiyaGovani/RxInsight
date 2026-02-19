@@ -43,6 +43,85 @@ def _serialize_reminder(reminder):
 	}
 
 
+@bp.route("/admin/reminders", methods=["GET"])
+@login_required
+def get_admin_reminders():
+	if session.get("role") != 1:
+		return jsonify({"success": False, "error": "Admin access required"}), 403
+
+	username = str(request.args.get("username", "")).strip()
+
+	conn = None
+	try:
+		conn = get_connection()
+
+		with conn.cursor() as cur:
+			cur.execute("SELECT to_regclass('public.reminders')")
+			reminders_table_exists = cur.fetchone()[0] is not None
+
+			if not reminders_table_exists:
+				return jsonify({"success": True, "reminders": []}), 200
+
+			if username:
+				cur.execute(
+					"""
+					SELECT
+						r.reminder_id,
+						r.user_id,
+						u.username,
+						r.number_of_days,
+						r.medicine_name,
+						r.status,
+						r.created_at
+					FROM reminders r
+					LEFT JOIN users u ON u.user_id = r.user_id
+					WHERE u.username ILIKE %s
+					ORDER BY r.created_at DESC, r.reminder_id DESC
+					""",
+					(f"%{username}%",)
+				)
+			else:
+				cur.execute(
+					"""
+					SELECT
+						r.reminder_id,
+						r.user_id,
+						u.username,
+						r.number_of_days,
+						r.medicine_name,
+						r.status,
+						r.created_at
+					FROM reminders r
+					LEFT JOIN users u ON u.user_id = r.user_id
+					ORDER BY r.created_at DESC, r.reminder_id DESC
+					"""
+				)
+
+			rows = cur.fetchall()
+
+		reminders = []
+		for row in rows:
+			reminders.append(
+				{
+					"reminder_id": row[0],
+					"user_id": row[1],
+					"username": row[2],
+					"number_of_days": row[3],
+					"medicine_name": row[4],
+					"status": row[5],
+					"created_at": row[6].isoformat() if hasattr(row[6], "isoformat") else str(row[6]),
+				}
+			)
+
+		return jsonify({"success": True, "reminders": reminders}), 200
+	except Exception as e:
+		print(f"Admin reminder fetch error: {e}")
+		return jsonify({"success": False, "error": "Failed to fetch reminders"}), 500
+	finally:
+		if conn:
+			conn.close()
+
+
 @bp.route("/set-reminder", methods=["POST"])
 @login_required
 def set_reminder():

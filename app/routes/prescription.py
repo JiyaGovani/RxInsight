@@ -9,6 +9,104 @@ from app.utils.prescription_parser import PrescriptionParser
 
 bp = Blueprint("prescription", __name__)
 
+
+@bp.route("/admin/prescriptions", methods=["GET"])
+@login_required
+def get_admin_prescriptions():
+    """Fetch all prescriptions across users grouped by prescription_id for admin dashboard."""
+    if session.get("role") != 1:
+        return jsonify({"success": False, "error": "Admin access required"}), 403
+
+    username = str(request.args.get("username", "")).strip()
+    limit_value = request.args.get("limit", type=int)
+    limit = limit_value if limit_value and limit_value > 0 else None
+
+    conn = None
+    try:
+        conn = get_connection()
+
+        with conn.cursor() as cur:
+            cur.execute("SELECT to_regclass('public.prescriptions')")
+            prescriptions_table_exists = cur.fetchone()[0] is not None
+
+            if not prescriptions_table_exists:
+                return jsonify({"success": True, "prescriptions": []}), 200
+
+            if username:
+                cur.execute(
+                    """
+                    SELECT
+                        p.prescription_id,
+                        p.user_id,
+                        u.username,
+                        p.medicine_name,
+                        p.dosage,
+                        p.frequency,
+                        p.duration,
+                        p.created_at
+                    FROM prescriptions p
+                    LEFT JOIN users u ON u.user_id = p.user_id
+                    WHERE u.username ILIKE %s
+                    ORDER BY p.created_at DESC, p.prescription_id DESC
+                    """,
+                    (f"%{username}%",)
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT
+                        p.prescription_id,
+                        p.user_id,
+                        u.username,
+                        p.medicine_name,
+                        p.dosage,
+                        p.frequency,
+                        p.duration,
+                        p.created_at
+                    FROM prescriptions p
+                    LEFT JOIN users u ON u.user_id = p.user_id
+                    ORDER BY p.created_at DESC, p.prescription_id DESC
+                    """
+                )
+            rows = cur.fetchall()
+
+        prescriptions = {}
+        for row in rows:
+            prescription_id = row[0]
+            user_id = row[1]
+            username = row[2]
+            grouping_key = (prescription_id, user_id)
+
+            if grouping_key not in prescriptions:
+                prescriptions[grouping_key] = {
+                    "prescription_id": prescription_id,
+                    "user_id": user_id,
+                    "username": username,
+                    "upload_date": row[7].isoformat() if hasattr(row[7], "isoformat") else str(row[7]),
+                    "medicines": [],
+                }
+
+            prescriptions[grouping_key]["medicines"].append(
+                {
+                    "medicine_name": row[3],
+                    "dosage": row[4],
+                    "frequency": row[5],
+                    "duration": row[6],
+                }
+            )
+
+        prescription_list = list(prescriptions.values())
+        if limit is not None:
+            prescription_list = prescription_list[:limit]
+        return jsonify({"success": True, "prescriptions": prescription_list}), 200
+
+    except Exception as e:
+        print(f"Error fetching admin prescriptions: {e}")
+        return jsonify({"success": False, "error": "Failed to fetch prescriptions"}), 500
+    finally:
+        if conn:
+            conn.close()
+
 @bp.route("/upload-prescription", methods=["POST"])
 @login_required
 def upload_prescription():

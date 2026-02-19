@@ -42,7 +42,6 @@
         <div class="rx-topbar-right" id="rxNavMenu">
             <ul class="nav-links rx-nav-links">
                 <li><a href="#" class="nav-btn active" aria-current="page">Dashboard</a></li>
-                <li><a href="#" class="nav-btn" id="rxTopbarSettings">Settings</a></li>
                 <li><a href="/logout" class="nav-btn outline">Logout</a></li>
             </ul>
 
@@ -73,7 +72,7 @@
                     <div class="rx-kpi-icon"><i class="fa-solid fa-users"></i></div>
                     <div class="rx-kpi-body">
                         <div class="rx-kpi-label">Total Users</div>
-                        <div class="rx-kpi-value">2,148</div>
+                        <div id="kpiTotalUsers" class="rx-kpi-value">0</div>
                     </div>
                 </div>
             </div>
@@ -82,25 +81,25 @@
                     <div class="rx-kpi-icon"><i class="fa-solid fa-file-prescription"></i></div>
                     <div class="rx-kpi-body">
                         <div class="rx-kpi-label">Prescriptions</div>
-                        <div class="rx-kpi-value">12,604</div>
+                        <div id="kpiTotalPrescriptions" class="rx-kpi-value">0</div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-lg-3">
                 <div class="rx-kpi">
-                    <div class="rx-kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-pills"></i></div>
                     <div class="rx-kpi-body">
-                        <div class="rx-kpi-label">Active Alerts</div>
-                        <div class="rx-kpi-value">7</div>
+                        <div class="rx-kpi-label">Total Medicines</div>
+                        <div id="kpiTotalMedicines" class="rx-kpi-value">0</div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-lg-3">
                 <div class="rx-kpi">
-                    <div class="rx-kpi-icon"><i class="fa-solid fa-shield-heart"></i></div>
+                    <div class="rx-kpi-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
                     <div class="rx-kpi-body">
-                        <div class="rx-kpi-label">System Status</div>
-                        <div class="rx-kpi-value">OK</div>
+                        <div class="rx-kpi-label">Last Sync</div>
+                        <div id="kpiLastSync" class="rx-kpi-value">--:--</div>
                     </div>
                 </div>
             </div>
@@ -118,39 +117,24 @@
                             style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
                             <i class="fa-solid fa-gauge me-2"></i>Admin Overview
                         </h3>
-                        <div class="alert alert-info"
-                            style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
-                            <i class="fa-solid fa-circle-info me-2"></i>No critical incidents. Scheduled maintenance window: Sunday 02:00–02:30.
-                        </div>
                         <div class="row g-3 mt-2">
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.7);">
-                                    <div class="card-body text-center">
-                                        <i class="fa-solid fa-users fa-2x mb-2" style="color: var(--primary-color);"></i>
-                                        <h5 class="fw-bold" style="color: var(--secondary-color);">2,148</h5>
-                                        <p class="text-muted small mb-0">Total Users</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.7);">
-                                    <div class="card-body text-center">
-                                        <i class="fa-solid fa-file-prescription fa-2x mb-2" style="color: var(--primary-color);"></i>
-                                        <h5 class="fw-bold" style="color: var(--secondary-color);">12,604</h5>
-                                        <p class="text-muted small mb-0">Total Prescriptions</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm" style="background: rgba(255,255,255,0.7);">
-                                    <div class="card-body text-center">
-                                        <i class="fa-solid fa-triangle-exclamation fa-2x mb-2" style="color: var(--primary-color);"></i>
-                                        <h5 class="fw-bold" style="color: var(--secondary-color);">7</h5>
-                                        <p class="text-muted small mb-0">Active Alerts</p>
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm overview-feed-card" style="background: rgba(255,255,255,0.7);">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
+                                            <div>
+                                                <h6 class="mb-1 overview-insights-title"><i class="fa-solid fa-wave-square me-2"></i>Latest Prescription Feed</h6>
+                                                <p class="small text-muted mb-0">Most recent prescription activity across patients.</p>
+                                            </div>
+                                            <span class="badge overview-live-badge"><span class="overview-live-radar" aria-hidden="true"></span>Live</span>
+                                        </div>
+                                        <div id="overviewFeedStatus" class="small text-muted mb-2">Loading recent activity...</div>
+                                        <div id="overviewFeedList" class="overview-feed-list"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- Manage Users Panel -->
@@ -160,54 +144,90 @@
                             <i class="fa-solid fa-users me-2"></i>Manage Users
                         </h3>
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <input type="search" class="form-control" style="max-width: 280px;" placeholder="Search users…" aria-label="Search users">
-                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-user-plus me-1"></i>Add User</button>
+                            <input id="userSearchInput" type="search" class="form-control" style="max-width: 280px;" placeholder="Search by username…" aria-label="Search users">
+                            <button id="btnSearchUsers" class="btn text-white" style="background-color: var(--primary-color);" type="button"><i class="fa-solid fa-magnifying-glass me-1"></i>Search</button>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-borderless align-middle"
-                                style="background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden;">
-                                <thead style="background-color: var(--secondary-color); color: white;">
-                                    <tr>
-                                        <th class="py-3 ps-3">User</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th class="text-end pe-3">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold">Jiya Patel</td>
-                                        <td>jiya@example.com</td>
-                                        <td>Admin</td>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                        <td class="text-end pe-3">
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold">John Doe</td>
-                                        <td>john@example.com</td>
-                                        <td>User</td>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                        <td class="text-end pe-3">
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold">Aisha Khan</td>
-                                        <td>aisha@example.com</td>
-                                        <td>User</td>
-                                        <td><span class="badge bg-warning text-dark">Pending</span></td>
-                                        <td class="text-end pe-3">
-                                            <button class="btn btn-sm btn-outline-primary me-1"><i class="fa-solid fa-pen"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="usersStatus" class="small text-muted mb-2"></div>
+                        <div id="usersCardsList" class="users-cards-grid">
+                        </div>
+                    </div>
+
+                    <!-- Manage Medicine Panel -->
+                    <div id="view-medicines" class="dashboard-content-panel" role="region" aria-label="Manage Medicine">
+                        <h3 class="mb-4"
+                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
+                            <i class="fa-solid fa-pills me-2"></i>Manage Medicine
+                        </h3>
+                        <div class="medicine-actions-grid">
+                            <button id="btnAddMedicine" class="btn btn-outline-primary medicine-action-btn" type="button">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>
+                                    <span class="medicine-action-title">Add Medicine</span>
+                                    <span class="medicine-action-subtitle">Create a new medicine record</span>
+                                </span>
+                            </button>
+                            <button id="btnDeleteMedicine" class="btn btn-outline-danger medicine-action-btn" type="button">
+                                <i class="fa-solid fa-trash"></i>
+                                <span>
+                                    <span class="medicine-action-title">Delete Medicine</span>
+                                    <span class="medicine-action-subtitle">Remove medicine by exact name</span>
+                                </span>
+                            </button>
+                            <button id="btnViewAllMedicines" class="btn medicine-action-btn medicine-action-view" type="button">
+                                <i class="fa-solid fa-eye"></i>
+                                <span>
+                                    <span class="medicine-action-title">View All Medicines</span>
+                                    <span class="medicine-action-subtitle">Browse full medicine details</span>
+                                </span>
+                            </button>
+                        </div>
+                        <div id="medicineActionAlertHost" class="mb-3"></div>
+
+                        <div id="addMedicineFormWrap" class="card border-0 shadow-sm p-3 d-none" style="background: rgba(255,255,255,0.65);">
+                            <h5 class="mb-3" style="color: var(--secondary-color);">Add Medicine Details</h5>
+                            <form id="addMedicineForm" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Name</label>
+                                        <input class="form-control" name="name" type="text" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">URL</label>
+                                        <input class="form-control" name="url" type="url" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Composition</label>
+                                        <input class="form-control" name="composition" type="text" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Dose Form</label>
+                                        <input class="form-control" name="dose_form" type="text" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Uses</label>
+                                        <textarea class="form-control" name="uses" rows="2" required></textarea>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Side Effect</label>
+                                        <textarea class="form-control" name="side_effect" rows="2" required></textarea>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Drug Interactions</label>
+                                        <textarea class="form-control" name="drug_interactions" rows="2" required></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2 mt-3">
+                                    <button id="btnSaveMedicine" class="btn text-white" style="background-color: var(--primary-color); border-color: var(--primary-color);" type="submit">Save Medicine</button>
+                                    <button id="btnCancelMedicine" class="btn btn-outline-secondary" type="button">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div id="allMedicinesWrap" class="card border-0 shadow-sm p-3 mt-3 d-none" style="background: rgba(255,255,255,0.65);">
+                            <h5 class="mb-3" style="color: var(--secondary-color);">All Medicines</h5>
+                            <div id="allMedicinesStatus" class="small text-muted mb-2"></div>
+                            <div id="allMedicinesList" class="d-grid gap-3"></div>
                         </div>
                     </div>
 
@@ -218,136 +238,35 @@
                             <i class="fa-solid fa-file-prescription me-2"></i>View Prescriptions
                         </h3>
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <input type="search" class="form-control" style="max-width: 280px;" placeholder="Search by patient / doctor / medicine…" aria-label="Search prescriptions">
-                            <select class="form-select" style="max-width: 160px;" aria-label="Filter prescriptions">
-                                <option>All</option>
-                                <option>Active</option>
-                                <option>Expired</option>
-                                <option>Flagged</option>
-                            </select>
-                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-filter me-1"></i>Apply</button>
+                            <input id="prescriptionUserSearchInput" type="search" class="form-control" style="max-width: 280px;" placeholder="Search by username" aria-label="Search prescriptions by username">
+                            <button id="btnSearchPrescriptions" class="btn text-white" style="background-color: var(--primary-color); border-color: var(--primary-color);" type="button">
+                                <i class="fa-solid fa-magnifying-glass me-1"></i>Search
+                            </button>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-borderless align-middle"
-                                style="background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden;">
-                                <thead style="background-color: var(--secondary-color); color: white;">
-                                    <tr>
-                                        <th class="py-3 ps-3">Prescription</th>
-                                        <th>Patient</th>
-                                        <th>Doctor</th>
-                                        <th>Status</th>
-                                        <th class="text-end pe-3">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold text-muted">#RX-10293</td>
-                                        <td>John Doe</td>
-                                        <td>Dr. Smith</td>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button></td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold text-muted">#RX-10281</td>
-                                        <td>Aisha Khan</td>
-                                        <td>Dr. Emily White</td>
-                                        <td><span class="badge bg-warning text-dark">Flagged</span></td>
-                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button></td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
-                                        <td class="ps-3 fw-bold text-muted">#RX-10214</td>
-                                        <td>Mike Chen</td>
-                                        <td>Dr. Alan Grant</td>
-                                        <td><span class="badge bg-secondary">Expired</span></td>
-                                        <td class="text-end pe-3"><button class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></button></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="adminPrescriptionAlert" class="alert alert-info"
+                            style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
+                            <i class="fa-solid fa-circle-info me-2"></i>Loading prescriptions...
                         </div>
+                        <div id="adminPrescriptionList"></div>
                     </div>
 
-                    <!-- Analytics Panel -->
-                    <div id="view-analytics" class="dashboard-content-panel" role="region" aria-label="Analytics">
+                    <!-- View Reminders Panel -->
+                    <div id="view-reminders" class="dashboard-content-panel" role="region" aria-label="View Reminders">
                         <h3 class="mb-4"
                             style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
-                            <i class="fa-solid fa-chart-line me-2"></i>Analytics
+                            <i class="fa-solid fa-bell me-2"></i>View Reminders
                         </h3>
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <select class="form-select" style="max-width: 180px;" aria-label="Time range">
-                                <option>Last 7 days</option>
-                                <option>Last 30 days</option>
-                                <option>Last 90 days</option>
-                            </select>
-                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-chart-column me-1"></i>Refresh</button>
+                            <input id="reminderUserSearchInput" type="search" class="form-control" style="max-width: 280px;" placeholder="Search by username" aria-label="Search reminders by username">
+                            <button id="btnSearchReminders" class="btn text-white" style="background-color: var(--primary-color); border-color: var(--primary-color);" type="button">
+                                <i class="fa-solid fa-magnifying-glass me-1"></i>Search
+                            </button>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <div class="card h-100 border-0 shadow-sm p-3"
-                                    style="background: rgba(255,255,255,0.6);">
-                                    <h6 class="text-center text-muted">Weekly Prescriptions</h6>
-                                    <div class="d-flex align-items-end justify-content-center gap-2 mt-3"
-                                        style="height: 150px;">
-                                        <div style="width: 30px; height: 45%; background: var(--primary-color); border-radius: 4px;"></div>
-                                        <div style="width: 30px; height: 62%; background: var(--primary-color); border-radius: 4px;"></div>
-                                        <div style="width: 30px; height: 78%; background: var(--primary-color); border-radius: 4px;"></div>
-                                        <div style="width: 30px; height: 58%; background: var(--secondary-color); border-radius: 4px;"></div>
-                                        <div style="width: 30px; height: 92%; background: var(--primary-color); border-radius: 4px;"></div>
-                                        <div style="width: 30px; height: 70%; background: var(--primary-color); border-radius: 4px;"></div>
-                                        <div style="width: 30px; height: 88%; background: var(--primary-color); border-radius: 4px;"></div>
-                                    </div>
-                                    <p class="text-center mt-2 small">Mon - Sun</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <div class="p-3 d-flex flex-column justify-content-center align-items-center h-100"
-                                    style="background: rgba(255,255,255,0.6); border-radius: 12px;">
-                                    <div class="position-relative d-flex justify-content-center align-items-center"
-                                        style="width: 120px; height: 120px; border-radius: 50%; border: 10px solid var(--primary-color); border-right-color: transparent; transform: rotate(45deg);">
-                                    </div>
-                                    <h2 class="mt-3 fw-bold" style="color: var(--secondary-color);">5.4%</h2>
-                                    <p class="text-muted">Alert Rate (Flagged / Total)</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Alert List Panel -->
-                    <div id="view-alerts" class="dashboard-content-panel" role="region" aria-label="Alert List">
-                        <h3 class="mb-4"
-                            style="color: var(--secondary-color); border-bottom: 2px solid var(--primary-soft); padding-bottom: 10px;">
-                            <i class="fa-solid fa-bell me-2"></i>Alert List
-                        </h3>
-                        <div class="d-flex justify-content-end mb-3">
-                            <button class="btn text-white" style="background-color: var(--primary-color);"><i class="fa-solid fa-check-double me-1"></i>Mark All Reviewed</button>
-                        </div>
-
-                        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
-                            <i class="fa-solid fa-triangle-exclamation fa-xl me-3"></i>
-                            <div class="flex-grow-1">
-                                <strong>Potential Drug Interaction</strong>
-                                <p class="mb-0 small">Aspirin + Ibuprofen flagged for review on #RX-10281.</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary ms-2"><i class="fa-solid fa-eye"></i></button>
-                        </div>
-
-                        <div class="alert alert-info d-flex align-items-center mb-3" role="alert"
+                        <div id="adminReminderAlert" class="alert alert-info"
                             style="background-color: var(--primary-soft); color: var(--secondary-color); border-color: var(--primary-color);">
-                            <i class="fa-solid fa-file-circle-exclamation fa-xl me-3"></i>
-                            <div class="flex-grow-1">
-                                <strong>Missing Dosage Details</strong>
-                                <p class="mb-0 small">OCR confidence low on #RX-10214. Manual confirmation recommended.</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary ms-2"><i class="fa-solid fa-eye"></i></button>
+                            <i class="fa-solid fa-circle-info me-2"></i>Loading reminders...
                         </div>
-
-                        <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
-                            <i class="fa-solid fa-user-shield fa-xl me-3"></i>
-                            <div class="flex-grow-1">
-                                <strong>Repeated Login Attempts</strong>
-                                <p class="mb-0 small">3 failed attempts detected on admin account in the last hour.</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary ms-2"><i class="fa-solid fa-eye"></i></button>
-                        </div>
+                        <div id="adminReminderList"></div>
                     </div>
 
                 </div>
@@ -372,19 +291,19 @@
                             <span>Manage Users</span>
                         </button>
 
+                        <button type="button" class="dashboard-sidebar-item" data-view="medicines">
+                            <i class="fa-solid fa-pills"></i>
+                            <span>Manage Medicine</span>
+                        </button>
+
                         <button type="button" class="dashboard-sidebar-item" data-view="prescriptions">
                             <i class="fa-solid fa-file-prescription"></i>
                             <span>View Prescriptions</span>
                         </button>
 
-                        <button type="button" class="dashboard-sidebar-item" data-view="analytics">
-                            <i class="fa-solid fa-chart-line"></i>
-                            <span>Analytics</span>
-                        </button>
-
-                        <button type="button" class="dashboard-sidebar-item" data-view="alerts">
+                        <button type="button" class="dashboard-sidebar-item" data-view="reminders">
                             <i class="fa-solid fa-bell"></i>
-                            <span>Alert List</span>
+                            <span>View Reminders</span>
                         </button>
 
                         <button type="button" class="dashboard-sidebar-item" data-view="logout">
@@ -398,78 +317,32 @@
         </div>
     </div>
 
+    <div class="modal fade" id="medicineDeleteModal" tabindex="-1" aria-labelledby="medicineDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="medicineDeleteModalLabel">
+                        <i class="fa-solid fa-trash me-2 text-danger"></i>Delete Medicine
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="deleteMedicineForm" novalidate>
+                    <div class="modal-body">
+                        <label for="deleteMedicineNameInput" class="form-label">Medicine Name</label>
+                        <input id="deleteMedicineNameInput" name="name" class="form-control" type="text" placeholder="Enter exact medicine name" required>
+                        <div class="form-text">All medicines with this name will be deleted.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button id="btnConfirmDeleteMedicine" type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        (function () {
-            /* ── Image fallback (same as user dashboard) ── */
-            function replaceImageWithAlt(img) {
-                if (!img || img.dataset.fallbackApplied === 'true') return;
-                const altText = (img.getAttribute('alt') || 'Image').trim();
-                const size = img.getAttribute('data-fallback-size') || 'sm';
-                const fallback = document.createElement('span');
-                fallback.className = 'rx-img-fallback rx-img-fallback-' + size;
-                fallback.textContent = altText;
-                img.dataset.fallbackApplied = 'true';
-                img.replaceWith(fallback);
-            }
-            document.querySelectorAll('img.rx-fallback-img').forEach(function (img) {
-                img.addEventListener('error', function () { replaceImageWithAlt(img); });
-                if (img.complete && img.naturalWidth === 0) replaceImageWithAlt(img);
-            });
-
-            /* ── Nav toggle (same as user dashboard) ── */
-            var navToggle = document.getElementById('rxNavToggle');
-            var navMenu = document.getElementById('rxNavMenu');
-            var actionList = document.getElementById('rxActionList');
-
-            function setNavOpen(isOpen) {
-                if (!navToggle || !navMenu) return;
-                navToggle.setAttribute('aria-expanded', String(isOpen));
-                navMenu.classList.toggle('rx-nav-open', isOpen);
-            }
-
-            /* ── Panel switching (same pattern as user dashboard) ── */
-            function switchView(viewName) {
-                if (viewName === 'logout') { window.location.href = '/logout'; return; }
-
-                document.querySelectorAll('.dashboard-content-panel').forEach(function (panel) {
-                    panel.classList.toggle('active', panel.id === 'view-' + viewName);
-                });
-                document.querySelectorAll('.dashboard-sidebar-item').forEach(function (item) {
-                    item.classList.toggle('active', item.getAttribute('data-view') === viewName);
-                });
-            }
-
-            if (navToggle) {
-                navToggle.addEventListener('click', function () {
-                    var isOpen = navToggle.getAttribute('aria-expanded') === 'true';
-                    setNavOpen(!isOpen);
-                });
-            }
-
-            if (actionList) {
-                actionList.addEventListener('click', function (event) {
-                    var button = event.target.closest('button[data-view]');
-                    if (!button) return;
-                    switchView(button.getAttribute('data-view'));
-                });
-            }
-
-            /* ── Close mobile menu on resize up ── */
-            window.addEventListener('resize', function () {
-                if (window.innerWidth >= 768) setNavOpen(false);
-            });
-
-            /* ── Topbar Settings shortcut ── */
-            var topbarSettings = document.getElementById('rxTopbarSettings');
-            if (topbarSettings) {
-                topbarSettings.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    switchView('overview');
-                });
-            }
-        })();
-    </script>
+    <script src="/static/js/admin_dashboard.js"></script>
 
 </body>
 
