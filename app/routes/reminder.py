@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, request, session
 
 from app.dao.reminder_dao import ReminderDAO
+from app.dao.user_dao import UserDAO
 from app.db.connection import get_connection
 from app.utils.decorators import login_required
+from app.utils.sms import build_missed_dose_message, is_sms_configured, send_sms
 
 
 bp = Blueprint("reminder", __name__)
@@ -166,7 +168,24 @@ def set_reminder():
 		reminder_id = reminder_dao.insert_reminder(user_id, reminder_payload)
 		conn.commit()
 
-		return jsonify({"success": True, "reminder_id": reminder_id}), 201
+		sms_result = {"success": False, "error": "SMS not sent"}
+		if is_sms_configured():
+			try:
+				user = UserDAO().find_by_id(user_id)
+				contact_number = getattr(user, "contact_number", None) if user else None
+				if contact_number:
+					message = (
+						f"RxInsight: Reminder set for {medicine_name}. "
+						f"Time slots: {', '.join(frequency)}. "
+						f"Duration: {number_of_days} day(s)."
+					)
+					sms_result = send_sms(contact_number, message)
+				else:
+					sms_result = {"success": False, "error": "No contact number found for user"}
+			except Exception as sms_error:
+				sms_result = {"success": False, "error": str(sms_error)}
+
+		return jsonify({"success": True, "reminder_id": reminder_id, "sms": sms_result}), 201
 	except Exception as e:
 		if conn:
 			conn.rollback()
@@ -205,15 +224,78 @@ def update_reminder_status(reminder_id):
 		conn = get_connection()
 		reminder_dao = ReminderDAO(conn)
 		user_id = session.get("user_id")
+		reminder = reminder_dao.get_reminder_by_id_for_user(reminder_id, user_id)
+		if not reminder:
+			return jsonify({"success": False, "error": "Reminder not found"}), 404
 
 		updated_id = reminder_dao.update_reminder_status_for_user(reminder_id, user_id, status)
 		if not updated_id:
 			return jsonify({"success": False, "error": "Reminder not found"}), 404
 
 		conn.commit()
-		return jsonify({"success": True, "reminder_id": updated_id, "status": status}), 200
+
+		sms_result = None
+		if status == "missed" and bool(reminder.get("missed_dose_reminder")):
+			try:
+				user = UserDAO().find_by_id(user_id)
+				emergency_contact = getattr(user, "emergency_contact", None) if user else None
+				username = session.get("username") or (getattr(user, "username", None) if user else None) or "User"
+
+				if emergency_contact:
+					alert_message = build_missed_dose_message(username)
+					sms_result = send_sms(emergency_contact, alert_message)
+				else:
+					sms_result = {"success": False, "error": "Emergency contact number is missing"}
+			except Exception as sms_error:
+				sms_result = {"success": False, "error": str(sms_error)}
+
+		response = {"success": True, "reminder_id": updated_id, "status": status}
+		if sms_result is not None:
+			response["sms"] = sms_result
+
+		return jsonify(response), 200
 	except Exception as e:
 		if conn:
 			conn.rollback()
 		print(f"Reminder status update error: {e}")
 		return jsonify({"success": False, "error": "Failed to update reminder status"}), 500
+
+
+@bp.route("/reminders/<int:reminder_id>/send-sms", methods=["POST"])
+@login_required
+def send_reminder_sms(reminder_id):
+	if not is_sms_configured():
+		return jsonify({"success": False, "error": "Twilio is not configured"}), 400
+
+	conn = None
+	try:
+		conn = get_connection()
+		reminder_dao = ReminderDAO(conn)
+		user_id = session.get("user_id")
+
+		reminder = reminder_dao.get_reminder_by_id_for_user(reminder_id, user_id)
+		if not reminder:
+			return jsonify({"success": False, "error": "Reminder not found"}), 404
+
+		user = UserDAO().find_by_id(user_id)
+		contact_number = getattr(user, "contact_number", None) if user else None
+		if not contact_number:
+			return jsonify({"success": False, "error": "User contact number is missing"}), 400
+
+		times = reminder.get("time_setters") or []
+		formatted_times = ", ".join(str(item)[:5] for item in times) if times else "N/A"
+		message = (
+			f"RxInsight Reminder: Time to take {reminder.get('medicine_name')}. "
+			f"Scheduled at {formatted_times}."
+		)
+
+		sms_result = send_sms(contact_number, message)
+		if not sms_result.get("success"):
+			return jsonify({"success": False, "error": sms_result.get("error", "SMS failed")}), 500
+
+		return jsonify({"success": True, "sid": sms_result.get("sid")}), 200
+	except Exception as e:
+		if conn:
+			conn.rollback()
+		print(f"Reminder SMS error: {e}")
+		return jsonify({"success": False, "error": "Failed to send SMS"}), 500

@@ -113,6 +113,47 @@ class ReminderDAO:
             row = cur.fetchone()
             return row[0] if row else None
 
+    def get_reminder_by_id_for_user(self, reminder_id, user_id):
+        query = """
+            SELECT
+                reminder_id,
+                user_id,
+                medicine_name,
+                number_of_days,
+                frequency,
+                time_setters,
+                missed_dose_reminder,
+                status,
+                start_date,
+                end_date,
+                msg_sent,
+                created_at
+            FROM reminders
+            WHERE reminder_id = %s AND user_id = %s;
+        """
+
+        with self.conn.cursor() as cur:
+            cur.execute(query, (reminder_id, user_id))
+            row = cur.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "reminder_id": row[0],
+            "user_id": row[1],
+            "medicine_name": row[2],
+            "number_of_days": row[3],
+            "frequency": row[4],
+            "time_setters": row[5],
+            "missed_dose_reminder": row[6],
+            "status": row[7],
+            "start_date": row[8],
+            "end_date": row[9],
+            "msg_sent": row[10],
+            "created_at": row[11],
+        }
+
     def mark_message_sent(self, reminder_id):
         query = """
             UPDATE reminders
