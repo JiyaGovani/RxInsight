@@ -210,6 +210,12 @@ def update_profile():
     email = str(data.get("email", "")).strip()
     contact_number = str(data.get("contact_number", "")).strip()
     emergency_contact = str(data.get("emergency_contact", "")).strip()
+    
+    # Add +91 country code prefix to phone numbers if not already present
+    if contact_number and not contact_number.startswith("+"):
+        contact_number = "+91" + contact_number
+    if emergency_contact and not emergency_contact.startswith("+"):
+        emergency_contact = "+91" + emergency_contact
 
     if not username or not email:
         return jsonify(success=False, message="Username and email are required"), 400
@@ -409,6 +415,12 @@ def register():
     password = str(data["password"])
     contact_number = str(data["contact_number"]).strip()
     emergency_contact = str(data["emergency_contact"]).strip()
+    
+    # Add +91 country code prefix to phone numbers
+    if contact_number and not contact_number.startswith("+"):
+        contact_number = "+91" + contact_number
+    if emergency_contact and not emergency_contact.startswith("+"):
+        emergency_contact = "+91" + emergency_contact
 
     # Keep parsing simple but safe (PostgreSQL DATE/NUMERIC expect valid values).
     try:
