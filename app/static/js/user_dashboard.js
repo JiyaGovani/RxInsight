@@ -1007,6 +1007,9 @@
                 msgDiv.textContent = 'Upload successful!';
                 msgDiv.style.color = 'green';
                 renderMedicineCards(data.medicines || []);
+                if (window.updateDashboardKPIs) {
+                    window.updateDashboardKPIs();
+                }
             } else {
                 msgDiv.textContent = data.error || 'Upload failed.';
                 msgDiv.style.color = 'red';
