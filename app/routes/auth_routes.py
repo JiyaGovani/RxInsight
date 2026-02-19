@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, request, send_file, session, redirect
 
 from app.dao.user_dao import UserDAO
 from app.models.user import User
+from app.utils.decorators import login_required
 
 
 # Keep routes in this file as requested.
@@ -143,26 +144,44 @@ def dbinfo():
         return jsonify(success=False, message="Could not read DB info"), 500
 
 
-def _serialize_user_profile(user):
+def _get_payload():
+    """Accept JSON (fetch) or form data (normal form post)."""
+    if request.is_json:
+        return request.get_json(silent=True) or {}
+    return request.form.to_dict() or {}
+
+
+def _serialize_admin_user(user):
     return {
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": user.email,
-        "contact_number": user.contact_number,
-        "emergency_contact": user.emergency_contact,
-        "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
-        "weight": float(user.weight) if user.weight is not None else None,
-        "height": float(user.height) if user.height is not None else None,
-        "role": user.role,
+        "user_id": getattr(user, "user_id", None),
+        "username": getattr(user, "username", None),
+        "email": getattr(user, "email", None),
+        "contact_number": getattr(user, "contact_number", None),
+        "emergency_contact": getattr(user, "emergency_contact", None),
+        "date_of_birth": getattr(user, "date_of_birth", None).isoformat() if getattr(user, "date_of_birth", None) else None,
+        "weight": getattr(user, "weight", None),
+        "height": getattr(user, "height", None),
+    }
+
+
+def _serialize_profile_user(user):
+    return {
+        "user_id": getattr(user, "user_id", None),
+        "username": getattr(user, "username", None),
+        "email": getattr(user, "email", None),
+        "contact_number": getattr(user, "contact_number", None),
+        "emergency_contact": getattr(user, "emergency_contact", None),
+        "date_of_birth": getattr(user, "date_of_birth", None).isoformat() if getattr(user, "date_of_birth", None) else None,
+        "weight": float(getattr(user, "weight", 0)) if getattr(user, "weight", None) is not None else None,
+        "height": float(getattr(user, "height", 0)) if getattr(user, "height", None) is not None else None,
+        "role": getattr(user, "role", 0),
     }
 
 
 @bp.route("/auth/profile", methods=["GET"])
+@login_required
 def get_profile():
     user_id = session.get("user_id")
-    if not user_id:
-        return jsonify(success=False, message="Unauthorized"), 401
-
     user_dao = UserDAO()
 
     try:
@@ -170,7 +189,8 @@ def get_profile():
         user = user_dao.find_by_id(user_id)
         if not user:
             return jsonify(success=False, message="User not found"), 404
-        return jsonify(success=True, user=_serialize_user_profile(user)), 200
+
+        return jsonify(success=True, user=_serialize_profile_user(user)), 200
     except Exception:
         try:
             user_dao.conn.rollback()
@@ -180,30 +200,19 @@ def get_profile():
 
 
 @bp.route("/auth/profile", methods=["PUT"])
+@login_required
 def update_profile():
     user_id = session.get("user_id")
-    if not user_id:
-        return jsonify(success=False, message="Unauthorized"), 401
-
     data = _get_payload()
-
-    required_fields = [
-        "username",
-        "email",
-        "contact_number",
-        "emergency_contact",
-        "date_of_birth",
-        "weight",
-        "height",
-    ]
-    missing = [f for f in required_fields if str(data.get(f, "")).strip() == ""]
-    if missing:
-        return jsonify(success=False, message=f"Missing fields: {', '.join(missing)}"), 400
+    user_dao = UserDAO()
 
     username = str(data.get("username", "")).strip()
     email = str(data.get("email", "")).strip()
     contact_number = str(data.get("contact_number", "")).strip()
     emergency_contact = str(data.get("emergency_contact", "")).strip()
+
+    if not username or not email:
+        return jsonify(success=False, message="Username and email are required"), 400
 
     try:
         date_of_birth = datetime.strptime(str(data.get("date_of_birth", "")).strip(), "%Y-%m-%d").date()
@@ -216,36 +225,57 @@ def update_profile():
     except ValueError:
         return jsonify(success=False, message="Invalid weight/height"), 400
 
-    user_dao = UserDAO()
     try:
         ensure_users_table_exists(user_dao.conn)
 
-        existing_by_username = user_dao.find_by_username(username)
-        if existing_by_username and existing_by_username.user_id != user_id:
-            return jsonify(success=False, message="Username already in use"), 409
+        with user_dao.conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT user_id
+                FROM users
+                WHERE (username = %s OR email = %s) AND user_id <> %s
+                LIMIT 1
+                """,
+                (username, email, user_id),
+            )
+            conflict = cur.fetchone()
 
-        existing_by_email = user_dao.find_by_email(email)
-        if existing_by_email and existing_by_email.user_id != user_id:
-            return jsonify(success=False, message="Email already in use"), 409
+            if conflict:
+                return jsonify(success=False, message="Username or email already in use"), 409
 
-        updated = user_dao.update_profile(
-            user_id,
-            username,
-            email,
-            contact_number,
-            emergency_contact,
-            date_of_birth,
-            weight,
-            height,
-        )
+            cur.execute(
+                """
+                UPDATE users
+                SET
+                    username = %s,
+                    email = %s,
+                    contact_number = %s,
+                    emergency_contact = %s,
+                    date_of_birth = %s,
+                    weight = %s,
+                    height = %s
+                WHERE user_id = %s
+                """,
+                (
+                    username,
+                    email,
+                    contact_number,
+                    emergency_contact,
+                    date_of_birth,
+                    weight,
+                    height,
+                    user_id,
+                ),
+            )
 
-        if not updated:
+        user_dao.conn.commit()
+
+        updated_user = user_dao.find_by_id(user_id)
+        if not updated_user:
             return jsonify(success=False, message="User not found"), 404
 
-        session["username"] = username
-
-        user = user_dao.find_by_id(user_id)
-        return jsonify(success=True, message="Profile updated", user=_serialize_user_profile(user)), 200
+        session["username"] = updated_user.username
+        return jsonify(success=True, message="Profile updated", user=_serialize_profile_user(updated_user)), 200
     except Exception:
         try:
             user_dao.conn.rollback()
@@ -254,11 +284,103 @@ def update_profile():
         return jsonify(success=False, message="Failed to update profile"), 500
 
 
-def _get_payload():
-    """Accept JSON (fetch) or form data (normal form post)."""
-    if request.is_json:
-        return request.get_json(silent=True) or {}
-    return request.form.to_dict() or {}
+@bp.route("/admin/users", methods=["GET"])
+@login_required
+def admin_users():
+    if session.get("role") != 1:
+        return jsonify(success=False, error="Admin access required"), 403
+
+    username = str(request.args.get("username", "")).strip()
+    user_dao = UserDAO()
+
+    try:
+        ensure_users_table_exists(user_dao.conn)
+
+        with user_dao.conn.cursor() as cur:
+            if username:
+                cur.execute(
+                    """
+                    SELECT user_id, username, email, password_hash, contact_number, emergency_contact, date_of_birth, weight, height, role, created_at
+                    FROM users
+                    WHERE role = 0 AND username = %s
+                    ORDER BY user_id ASC
+                    """,
+                    (username,),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT user_id, username, email, password_hash, contact_number, emergency_contact, date_of_birth, weight, height, role, created_at
+                    FROM users
+                    WHERE role = 0
+                    ORDER BY user_id ASC
+                    """
+                )
+
+            rows = cur.fetchall()
+
+        users = [
+            _serialize_admin_user(
+                User(
+                    row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
+                )
+            )
+            for row in rows
+        ]
+
+        return jsonify(success=True, users=users, total=len(users)), 200
+    except Exception:
+        try:
+            user_dao.conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, error="Failed to fetch users"), 500
+
+@bp.route("/admin/overview-stats", methods=["GET"])
+@login_required
+def admin_overview_stats():
+    if session.get("role") != 1:
+        return jsonify(success=False, error="Admin access required"), 403
+
+    user_dao = UserDAO()
+    try:
+        ensure_users_table_exists(user_dao.conn)
+
+        with user_dao.conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM users WHERE role = 0")
+            user_row = cur.fetchone()
+            total_users = int(user_row[0]) if user_row and user_row[0] is not None else 0
+
+            cur.execute("SELECT to_regclass('public.prescriptions')")
+            prescriptions_table_exists = cur.fetchone()[0] is not None
+
+            total_prescriptions = 0
+            if prescriptions_table_exists:
+                cur.execute("SELECT prescription_id FROM prescriptions ORDER BY prescription_id DESC LIMIT 1")
+                prescription_row = cur.fetchone()
+                total_prescriptions = int(prescription_row[0]) if prescription_row and prescription_row[0] is not None else 0
+
+            cur.execute("SELECT to_regclass('public.medicines')")
+            medicines_table_exists = cur.fetchone()[0] is not None
+
+            total_medicines = 0
+            if medicines_table_exists:
+                cur.execute("SELECT medicine_id FROM medicines ORDER BY medicine_id DESC LIMIT 1")
+                medicine_row = cur.fetchone()
+                total_medicines = int(medicine_row[0]) if medicine_row and medicine_row[0] is not None else 0
+
+        return jsonify(
+            success=True,
+            total_users=total_users,
+            total_prescriptions=total_prescriptions,
+            total_medicines=total_medicines,
+        ), 200
+    except Exception:
+        try:
+            user_dao.conn.rollback()
+        except Exception:
+            pass
+        return jsonify(success=False, error="Failed to fetch overview stats"), 500
 
 
 @bp.route("/auth/signup", methods=["POST"])
