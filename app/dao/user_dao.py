@@ -87,6 +87,22 @@ class UserDAO:
             self.conn.rollback()
             raise
 
+    def get_all_users(self):
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    "SELECT user_id, username, email, password_hash, contact_number, emergency_contact, date_of_birth, weight, height, role, created_at FROM users ORDER BY user_id ASC"
+                )
+                rows = cur.fetchall()
+
+            return [
+                User(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
+                for row in rows
+            ]
+        except Exception:
+            self.conn.rollback()
+            raise
+
     def verify_credentials(self, username_or_email, password_plain):
         try:
             with self.conn.cursor() as cur:
@@ -103,39 +119,6 @@ class UserDAO:
             if check_password_hash(user.password_hash, password_plain):
                 return user
             return None
-        except Exception:
-            self.conn.rollback()
-            raise
-
-    def update_profile(self, user_id, username, email, contact_number, emergency_contact, date_of_birth, weight, height):
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE users
-                    SET username = %s,
-                        email = %s,
-                        contact_number = %s,
-                        emergency_contact = %s,
-                        date_of_birth = %s,
-                        weight = %s,
-                        height = %s
-                    WHERE user_id = %s
-                    """,
-                    (
-                        username,
-                        email,
-                        contact_number,
-                        emergency_contact,
-                        date_of_birth,
-                        weight,
-                        height,
-                        user_id,
-                    ),
-                )
-                updated_rows = cur.rowcount
-            self.conn.commit()
-            return updated_rows > 0
         except Exception:
             self.conn.rollback()
             raise
