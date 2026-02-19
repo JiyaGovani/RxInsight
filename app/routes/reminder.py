@@ -12,11 +12,15 @@ bp = Blueprint("reminder", __name__)
 
 def _serialize_reminder(reminder):
 	def _to_iso(value):
-		if value and hasattr(value, "isoformat"):
+		if value is None:
+			return None
+		if hasattr(value, "isoformat"):
 			return value.isoformat()
-		return value
+		return str(value)
 	
 	def _convert_time(t):
+		if t is None:
+			return None
 		# Convert PostgreSQL time to HH:MM string
 		if hasattr(t, "hour") and hasattr(t, "minute"):
 			return f"{t.hour:02d}:{t.minute:02d}"
@@ -26,7 +30,9 @@ def _serialize_reminder(reminder):
 			return time_str[:5]  # Get HH:MM part
 		return time_str
 	
-	time_setters = reminder.get("time_setters") or []
+	time_setters = reminder.get("time_setters")
+	if time_setters is None:
+		time_setters = []
 	converted_times = [_convert_time(t) for t in time_setters]
 
 	return {
@@ -196,18 +202,21 @@ def set_reminder():
 @bp.route("/reminders", methods=["GET"])
 @login_required
 def get_user_reminders():
-	try:
-		conn = get_connection()
-		reminder_dao = ReminderDAO(conn)
-		user_id = session.get("user_id")
+    try:
+        conn = get_connection()
+        reminder_dao = ReminderDAO(conn)
+        user_id = session.get("user_id")
 
-		reminders = reminder_dao.get_reminders_by_user(user_id)
-		serialized = [_serialize_reminder(item) for item in reminders]
+        if not user_id:
+            raise ValueError("User ID is missing from session")
 
-		return jsonify({"success": True, "reminders": serialized}), 200
-	except Exception as e:
-		print(f"Reminder fetch error: {e}")
-		return jsonify({"success": False, "error": "Failed to fetch reminders"}), 500
+        reminders = reminder_dao.get_reminders_by_user(user_id)
+        serialized = [_serialize_reminder(item) for item in reminders]
+
+        return jsonify({"success": True, "reminders": serialized}), 200
+    except Exception as e:
+        print(f"Reminder fetch error: {e}")
+        return jsonify({"success": False, "error": f"Failed to fetch reminders: {str(e)}"}), 500
 
 
 @bp.route("/reminders/<int:reminder_id>/status", methods=["PATCH"])

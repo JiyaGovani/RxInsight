@@ -1,9 +1,11 @@
 from datetime import date
+import logging
 
 
 class ReminderDAO:
     def __init__(self, connection):
         self.conn = connection
+        self.logger = logging.getLogger(__name__)
 
     def insert_reminder(self, user_id, data):
         query = """
@@ -62,30 +64,33 @@ class ReminderDAO:
             ORDER BY created_at DESC;
         """
 
-        with self.conn.cursor() as cur:
-            cur.execute(query, (user_id,))
-            rows = cur.fetchall()
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(query, (user_id,))
+                rows = cur.fetchall()
 
-        reminders = []
-        for row in rows:
-            reminders.append(
-                {
-                    "reminder_id": row[0],
-                    "user_id": row[1],
-                    "medicine_name": row[2],
-                    "number_of_days": row[3],
-                    "frequency": row[4],
-                    "time_setters": row[5],
-                    "missed_dose_reminder": row[6],
-                    "status": row[7],
-                    "start_date": row[8],
-                    "end_date": row[9],
-                    "msg_sent": row[10],
-                    "created_at": row[11],
-                }
-            )
-
-        return reminders
+            reminders = []
+            for row in rows:
+                reminders.append(
+                    {
+                        "reminder_id": row[0],
+                        "user_id": row[1],
+                        "medicine_name": row[2],
+                        "number_of_days": row[3],
+                        "frequency": row[4],
+                        "time_setters": row[5],
+                        "missed_dose_reminder": row[6],
+                        "status": row[7],
+                        "start_date": row[8],
+                        "end_date": row[9],
+                        "msg_sent": row[10],
+                        "created_at": row[11],
+                    }
+                )
+            return reminders
+        except Exception as e:
+            print(f"Database error in get_reminders_by_user: {e}")
+            raise
 
     def update_reminder_status(self, reminder_id, status):
         query = """

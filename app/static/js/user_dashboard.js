@@ -332,11 +332,8 @@
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <h5 class="card-title fw-bold" style="color: var(--secondary-color);">
-                                        <i class="fa-solid fa-file-medical me-2" style="color: var(--primary-color);"></i>Prescription #${prescription.prescription_id}
+                                        <i class="fa-solid fa-file-medical me-2" style="color: var(--primary-color);"></i>${formattedDate}
                                     </h5>
-                                    <p class="card-text text-muted small">
-                                        <i class="fa-regular fa-calendar me-1"></i>Uploaded on: ${formattedDate}
-                                    </p>
                                 </div>
                             </div>
                             <hr>
@@ -386,8 +383,23 @@
         if (!user) return;
         if (profileUsername) profileUsername.value = user.username ?? '';
         if (profileEmail) profileEmail.value = user.email ?? '';
-        if (profileContactNumber) profileContactNumber.value = user.contact_number ?? '';
-        if (profileEmergencyContact) profileEmergencyContact.value = user.emergency_contact ?? '';
+        
+        // Strip +91 prefix for display (user will see only 10 digits)
+        if (profileContactNumber) {
+            let contact = user.contact_number ?? '';
+            if (contact.startsWith('+91')) {
+                contact = contact.substring(3);
+            }
+            profileContactNumber.value = contact;
+        }
+        if (profileEmergencyContact) {
+            let emergency = user.emergency_contact ?? '';
+            if (emergency.startsWith('+91')) {
+                emergency = emergency.substring(3);
+            }
+            profileEmergencyContact.value = emergency;
+        }
+        
         if (profileDateOfBirth) profileDateOfBirth.value = user.date_of_birth ?? '';
         if (profileWeight) profileWeight.value = user.weight ?? '';
         if (profileHeight) profileHeight.value = user.height ?? '';
