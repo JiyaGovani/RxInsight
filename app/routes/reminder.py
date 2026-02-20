@@ -11,43 +11,53 @@ bp = Blueprint("reminder", __name__)
 
 
 def _serialize_reminder(reminder):
-	def _to_iso(value):
+	"""Convert reminder data to JSON-friendly format."""
+	# Convert dates to ISO strings
+	def to_iso(value):
 		if value is None:
 			return None
-		if hasattr(value, "isoformat"):
-			return value.isoformat()
-		return str(value)
+		return value.isoformat() if hasattr(value, "isoformat") else str(value)
 	
-	def _convert_time(t):
+	# Convert time objects to HH:MM strings
+	def to_time_string(t):
 		if t is None:
 			return None
-		# Convert PostgreSQL time to HH:MM string
 		if hasattr(t, "hour") and hasattr(t, "minute"):
 			return f"{t.hour:02d}:{t.minute:02d}"
-		# Already a string, extract HH:MM
-		time_str = str(t)
-		if ':' in time_str:
-			return time_str[:5]  # Get HH:MM part
-		return time_str
+		return str(t)[:5]  # Extract HH:MM from string
 	
-	time_setters = reminder.get("time_setters")
-	if time_setters is None:
-		time_setters = []
-	converted_times = [_convert_time(t) for t in time_setters]
-
+	time_setters = reminder.get("time_setters") or []
+	
 	return {
 		"reminder_id": reminder.get("reminder_id"),
 		"user_id": reminder.get("user_id"),
 		"medicine_name": reminder.get("medicine_name"),
 		"number_of_days": reminder.get("number_of_days"),
 		"frequency": reminder.get("frequency") or [],
-		"time_setters": converted_times,
+		"time_setters": [to_time_string(t) for t in time_setters],
 		"missed_dose_reminder": reminder.get("missed_dose_reminder"),
 		"status": reminder.get("status"),
-		"start_date": _to_iso(reminder.get("start_date")),
-		"end_date": _to_iso(reminder.get("end_date")),
+		"start_date": to_iso(reminder.get("start_date")),
+		"end_date": to_iso(reminder.get("end_date")),
 		"msg_sent": reminder.get("msg_sent"),
-		"created_at": _to_iso(reminder.get("created_at")),
+		"created_at": to_iso(reminder.get("created_at")),
+	}
+
+
+def _serialize_dose(dose):
+	"""Convert dose log data to JSON-friendly format."""
+	def to_iso(value):
+		return value.isoformat() if hasattr(value, "isoformat") else str(value)
+	
+	return {
+		"log_id": dose["log_id"],
+		"reminder_id": dose["reminder_id"],
+		"dose_date": to_iso(dose["dose_date"]),
+		"dose_time": str(dose["dose_time"])[:5] if dose["dose_time"] else None,
+		"status": dose["status"],
+		"medicine_name": dose.get("medicine_name"),
+		"missed_dose_reminder": dose.get("missed_dose_reminder"),
+		"logged_at": to_iso(dose.get("logged_at")) if "logged_at" in dose else None,
 	}
 
 
@@ -222,25 +232,32 @@ def get_user_reminders():
 @bp.route("/reminders/<int:reminder_id>/status", methods=["PATCH"])
 @login_required
 def update_reminder_status(reminder_id):
+	"""Update dose status for a specific reminder and time."""
 	data = request.get_json(silent=True) or {}
 	status = (data.get("status") or "").strip().lower()
+	dose_date = data.get("dose_date")  # Expected format: YYYY-MM-DD
+	dose_time = data.get("dose_time")  # Expected format: HH:MM
 
 	if status not in {"taken", "missed", "pending"}:
 		return jsonify({"success": False, "error": "Invalid status"}), 400
+	
+	if not dose_date or not dose_time:
+		return jsonify({"success": False, "error": "dose_date and dose_time are required"}), 400
 
 	conn = None
 	try:
 		conn = get_connection()
 		reminder_dao = ReminderDAO(conn)
 		user_id = session.get("user_id")
+		
+		# Verify reminder belongs to user
 		reminder = reminder_dao.get_reminder_by_id_for_user(reminder_id, user_id)
 		if not reminder:
 			return jsonify({"success": False, "error": "Reminder not found"}), 404
 
-		updated_id = reminder_dao.update_reminder_status_for_user(reminder_id, user_id, status)
-		if not updated_id:
-			return jsonify({"success": False, "error": "Reminder not found"}), 404
-
+		# Log the dose
+		log_id = reminder_dao.log_dose(reminder_id, user_id, dose_date, dose_time, status)
+		
 		conn.commit()
 
 		sms_result = None
@@ -258,7 +275,7 @@ def update_reminder_status(reminder_id):
 			except Exception as sms_error:
 				sms_result = {"success": False, "error": str(sms_error)}
 
-		response = {"success": True, "reminder_id": updated_id, "status": status}
+		response = {"success": True, "log_id": log_id, "status": status}
 		if sms_result is not None:
 			response["sms"] = sms_result
 
@@ -266,8 +283,8 @@ def update_reminder_status(reminder_id):
 	except Exception as e:
 		if conn:
 			conn.rollback()
-		print(f"Reminder status update error: {e}")
-		return jsonify({"success": False, "error": "Failed to update reminder status"}), 500
+		print(f"Dose logging error: {e}")
+		return jsonify({"success": False, "error": "Failed to log dose"}), 500
 
 
 @bp.route("/reminders/<int:reminder_id>/send-sms", methods=["POST"])
@@ -308,3 +325,46 @@ def send_reminder_sms(reminder_id):
 			conn.rollback()
 		print(f"Reminder SMS error: {e}")
 		return jsonify({"success": False, "error": "Failed to send SMS"}), 500
+
+
+@bp.route("/reminders/<int:reminder_id>/doses", methods=["GET"])
+@login_required
+def get_reminder_doses(reminder_id):
+	"""Get all dose logs for a specific reminder."""
+	conn = None
+	try:
+		conn = get_connection()
+		reminder_dao = ReminderDAO(conn)
+		user_id = session.get("user_id")
+		
+		# Verify reminder belongs to user
+		reminder = reminder_dao.get_reminder_by_id_for_user(reminder_id, user_id)
+		if not reminder:
+			return jsonify({"success": False, "error": "Reminder not found"}), 404
+		
+		doses = reminder_dao.get_dose_logs_for_reminder(reminder_id, user_id)
+		serialized_doses = [_serialize_dose(dose) for dose in doses]
+		
+		return jsonify({"success": True, "doses": serialized_doses}), 200
+	except Exception as e:
+		print(f"Get doses error: {e}")
+		return jsonify({"success": False, "error": "Failed to fetch doses"}), 500
+
+
+@bp.route("/doses/today", methods=["GET"])
+@login_required
+def get_todays_doses():
+	"""Get all doses for the current user for today."""
+	conn = None
+	try:
+		conn = get_connection()
+		reminder_dao = ReminderDAO(conn)
+		user_id = session.get("user_id")
+		
+		doses = reminder_dao.get_todays_doses_for_user(user_id)
+		serialized_doses = [_serialize_dose(dose) for dose in doses]
+		
+		return jsonify({"success": True, "doses": serialized_doses}), 200
+	except Exception as e:
+		print(f"Get today's doses error: {e}")
+		return jsonify({"success": False, "error": "Failed to fetch today's doses"}), 500
