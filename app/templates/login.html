@@ -43,17 +43,44 @@
 
             <!-- FORGOT PASSWORD -->
             <div class="form-box forgot-password">
-                <form class="w-100">
+                <form id="forgotPasswordForm" class="w-100">
                     <h1 class="mb-3">Reset Password</h1>
-                    <p class="text-muted mb-3">Enter your email address and we'll send you your password.</p>
 
-                    <div class="form-floating mb-3 input-box">
-                        <input type="email" class="form-control pe-5" placeholder="Email" required>
-                        <label>Email</label>
-                        <i class="fa-solid fa-envelope input-icon"></i>
+                    <div id="forgotOtpStep">
+                        <p class="text-muted mb-3">Enter your email to receive an OTP and reset your password.</p>
+                        <div class="form-floating mb-3 input-box">
+                            <input id="forgotEmail" name="email" type="email" class="form-control pe-5" placeholder="Email" required>
+                            <label for="forgotEmail">Email</label>
+                            <i class="fa-solid fa-envelope input-icon"></i>
+                        </div>
+
+                        <button id="btnSendOtp" type="button" class="btn btn-primary w-100 py-2 mb-3">Send OTP</button>
+
+                        <div class="form-floating mb-3 input-box">
+                            <input id="forgotOtp" name="otp" type="text" class="form-control pe-5" placeholder="OTP" maxlength="6" inputmode="numeric">
+                            <label for="forgotOtp">OTP</label>
+                            <i class="fa-solid fa-shield-halved input-icon"></i>
+                        </div>
+
+                        <button id="btnVerifyOtp" type="button" class="btn text-white w-100 py-2 mb-3" style="background-color: #0B3C5D; border-color: #0B3C5D;">Verify OTP</button>
                     </div>
 
-                    <button class="btn btn-primary w-100 py-2 mb-3">Send Password</button>
+                    <div id="forgotResetStep" class="d-none">
+                        <p class="text-muted mb-3">Set your new password.</p>
+                        <div class="form-floating mb-3 input-box">
+                            <input id="forgotNewPassword" name="new_password" type="password" class="form-control pe-5" placeholder="New Password" minlength="8" required>
+                            <label for="forgotNewPassword">New Password</label>
+                            <i class="fa-solid fa-lock input-icon"></i>
+                        </div>
+
+                        <div class="form-floating mb-3 input-box">
+                            <input id="forgotConfirmPassword" name="confirm_password" type="password" class="form-control pe-5" placeholder="Confirm Password" minlength="8" required>
+                            <label for="forgotConfirmPassword">Confirm Password</label>
+                            <i class="fa-solid fa-lock input-icon"></i>
+                        </div>
+
+                        <button id="btnResetPassword" type="button" class="btn btn-primary w-100 py-2 mb-3">Change Password</button>
+                    </div>
 
                     <div class="text-center">
                         <a href="#" class="small text-decoration-none" onclick="showLogin(); return false;">
@@ -68,6 +95,7 @@
                 <form class="w-100" id="registerForm" action="/auth/signup" method="post">
                     <h1 class="mb-3">Register</h1>
 
+                    <div id="registerStep1">
                     <div class="form-floating mb-2 input-box">
                         <input id="regUsername" name="username" type="text" class="form-control pe-5" placeholder="Username" required>
                         <label for="regUsername">Username</label>
@@ -81,7 +109,7 @@
                     </div>
 
                     <div class="form-floating mb-2 input-box">
-                        <input id="regPassword" name="password" type="password" class="form-control pe-5" placeholder="Password" required>
+                        <input id="regPassword" name="password" type="password" class="form-control pe-5" placeholder="Password" minlength="8" required>
                         <label for="regPassword">Password</label>
                         <i class="fa-solid fa-lock input-icon"></i>
                     </div>
@@ -125,7 +153,17 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary w-100 py-2">Register</button>
+                    <button id="btnRegister" class="btn btn-primary w-100 py-2">Register</button>
+                    </div>
+
+                    <div id="registerStep2" class="d-none mt-3">
+                        <div class="form-floating mb-2 input-box">
+                            <input id="registerOtp" name="register_otp" type="text" class="form-control pe-5" placeholder="OTP" maxlength="6" inputmode="numeric">
+                            <label for="registerOtp">Registration OTP</label>
+                            <i class="fa-solid fa-shield-halved input-icon"></i>
+                        </div>
+                        <button id="btnConfirmRegisterOtp" type="button" class="btn text-white w-100 py-2" style="background-color: #0B3C5D; border-color: #0B3C5D;">Verify OTP & Complete Registration</button>
+                    </div>
                 </form>
             </div>
 

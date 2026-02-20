@@ -121,8 +121,12 @@
   var btnSearchPrescriptions = document.getElementById('btnSearchPrescriptions');
   var adminReminderAlert = document.getElementById('adminReminderAlert');
   var adminReminderList = document.getElementById('adminReminderList');
-  var reminderUserSearchInput = document.getElementById('reminderUserSearchInput');
-  var btnSearchReminders = document.getElementById('btnSearchReminders');
+  var reminderStatusSelect = document.getElementById('reminderStatusSelect');
+  var reminderStatusDropdown = document.getElementById('reminderStatusDropdown');
+  var reminderStatusToggle = document.getElementById('reminderStatusToggle');
+  var reminderStatusLabel = document.getElementById('reminderStatusLabel');
+  var reminderStatusMenu = document.getElementById('reminderStatusMenu');
+  var btnResetReminderStatus = document.getElementById('btnResetReminderStatus');
 
   function updateOverviewCounts(totalUsers, totalPrescriptions, totalMedicines) {
     var usersValue = String(totalUsers == null ? 0 : totalUsers);
@@ -365,17 +369,18 @@
     return '<span class="badge bg-secondary">' + escapeHtml(status || '-') + '</span>';
   }
 
-  function renderAdminReminders(reminders, searchTerm) {
+  function renderAdminReminders(reminders) {
     if (!adminReminderList) return;
 
     adminReminderList.innerHTML = reminders.map(function (reminder) {
       var reminderId = escapeHtml(reminder.reminder_id ?? '-');
-      var usernameRaw = reminder.username || 'Unknown user';
-      var username = highlightMatch(usernameRaw, searchTerm);
+      var username = escapeHtml(reminder.username || 'Unknown user');
       var userId = escapeHtml(reminder.user_id ?? '-');
       var numberOfDays = escapeHtml(reminder.number_of_days ?? '-');
       var medicineName = escapeHtml(reminder.medicine_name ?? '-');
       var statusBadge = renderReminderStatusBadge(reminder.status);
+      var isMsgSent = reminder.msg_sent === true || reminder.msg_sent === 1 || String(reminder.msg_sent).toLowerCase() === 'true';
+      var msgSentLabel = isMsgSent ? 'Yes' : 'No';
 
       return '<div class="card border-0 shadow-sm mb-3" style="background: rgba(255,255,255,0.7);">' +
         '<div class="card-body">' +
@@ -392,19 +397,28 @@
           '<hr>' +
           '<div class="row g-2">' +
             '<div class="col-md-4"><span class="text-muted small">Number of Days:</span><div class="fw-semibold">' + numberOfDays + '</div></div>' +
-            '<div class="col-md-8"><span class="text-muted small">Medicine Name:</span><div class="fw-semibold">' + medicineName + '</div></div>' +
+            '<div class="col-md-4"><span class="text-muted small">Medicine Name:</span><div class="fw-semibold">' + medicineName + '</div></div>' +
+            '<div class="col-md-4"><span class="text-muted small">Message Sent:</span><div class="fw-semibold">' + escapeHtml(msgSentLabel) + '</div></div>' +
           '</div>' +
         '</div>' +
       '</div>';
     }).join('');
   }
 
-  async function loadAdminReminders(username) {
+  function formatReminderStatusLabel(status) {
+    var normalizedStatus = String(status || '').trim().toLowerCase();
+    if (normalizedStatus === 'taken') return 'Taken';
+    if (normalizedStatus === 'missed') return 'Missed';
+    if (normalizedStatus === 'pending') return 'Pending';
+    return 'All';
+  }
+
+  async function loadAdminReminders(status) {
     if (!adminReminderAlert || !adminReminderList) return;
 
-    var searchTerm = (username || '').trim();
+    var selectedStatus = String(status || '').trim().toLowerCase();
     var endpoint = '/admin/reminders';
-    if (searchTerm) endpoint += '?username=' + encodeURIComponent(searchTerm);
+    if (selectedStatus) endpoint += '?status=' + encodeURIComponent(selectedStatus);
 
     adminReminderAlert.className = 'alert alert-info';
     adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>Loading reminders...';
@@ -425,8 +439,8 @@
 
       var reminders = Array.isArray(result.reminders) ? result.reminders : [];
       if (!reminders.length) {
-        if (searchTerm) {
-          adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No reminders found for username: ' + escapeHtml(searchTerm) + '.';
+        if (selectedStatus) {
+          adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No reminders found with status: ' + escapeHtml(formatReminderStatusLabel(selectedStatus)) + '.';
         } else {
           adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No reminders found.';
         }
@@ -434,13 +448,13 @@
         return;
       }
 
-      if (searchTerm) {
-        adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>Showing ' + reminders.length + ' reminder' + (reminders.length > 1 ? 's' : '') + ' for username: ' + escapeHtml(searchTerm) + '.';
+      if (selectedStatus) {
+        adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>Showing ' + reminders.length + ' reminder' + (reminders.length > 1 ? 's' : '') + ' with status: ' + escapeHtml(formatReminderStatusLabel(selectedStatus)) + '.';
       } else {
         adminReminderAlert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>Showing ' + reminders.length + ' reminder' + (reminders.length > 1 ? 's' : '') + '.';
       }
 
-      renderAdminReminders(reminders, searchTerm);
+      renderAdminReminders(reminders);
     } catch (error) {
       adminReminderAlert.className = 'alert alert-danger';
       adminReminderAlert.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-2"></i>Error loading reminders: ' + escapeHtml(error.message || 'Unknown error');
@@ -874,24 +888,45 @@
     });
   }
 
-  if (btnSearchReminders) {
-    btnSearchReminders.addEventListener('click', function () {
-      loadAdminReminders(reminderUserSearchInput ? reminderUserSearchInput.value : '');
+  if (reminderStatusDropdown && reminderStatusToggle && reminderStatusMenu && reminderStatusSelect) {
+    reminderStatusToggle.addEventListener('click', function () {
+      var isOpen = reminderStatusToggle.getAttribute('aria-expanded') === 'true';
+      reminderStatusToggle.setAttribute('aria-expanded', String(!isOpen));
+      reminderStatusMenu.classList.toggle('d-none', isOpen);
+    });
+
+    reminderStatusMenu.querySelectorAll('.rx-status-option').forEach(function (optionBtn) {
+      optionBtn.addEventListener('click', function () {
+        var value = optionBtn.getAttribute('data-value') || '';
+        reminderStatusSelect.value = value;
+        reminderStatusLabel.textContent = optionBtn.textContent;
+        reminderStatusToggle.setAttribute('aria-expanded', 'false');
+        reminderStatusMenu.classList.add('d-none');
+        loadAdminReminders(value);
+      });
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!reminderStatusDropdown.contains(event.target)) {
+        reminderStatusToggle.setAttribute('aria-expanded', 'false');
+        reminderStatusMenu.classList.add('d-none');
+      }
     });
   }
 
-  if (reminderUserSearchInput) {
-    reminderUserSearchInput.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        loadAdminReminders(reminderUserSearchInput.value);
-      }
+  if (reminderStatusSelect) {
+    reminderStatusSelect.addEventListener('change', function () {
+      loadAdminReminders(reminderStatusSelect.value);
     });
+  }
 
-    reminderUserSearchInput.addEventListener('input', function () {
-      if (!reminderUserSearchInput.value.trim()) {
-        loadAdminReminders('');
-      }
+  if (btnResetReminderStatus && reminderStatusSelect) {
+    btnResetReminderStatus.addEventListener('click', function () {
+      reminderStatusSelect.value = '';
+      if (reminderStatusLabel) reminderStatusLabel.textContent = 'All';
+      if (reminderStatusToggle) reminderStatusToggle.setAttribute('aria-expanded', 'false');
+      if (reminderStatusMenu) reminderStatusMenu.classList.add('d-none');
+      loadAdminReminders('');
     });
   }
 

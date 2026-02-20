@@ -73,6 +73,24 @@
   box-shadow: 0 0 0 3px rgba(15, 158, 153, 0.12);
 }
 
+#view-reminders .rx-status-dropdown { position: relative; width: 280px; max-width: 100%; }
+#view-reminders .rx-status-toggle {
+  width: 100%; border-radius: 12px; border: 2px solid rgba(15, 158, 153, 0.18);
+  padding: 10px 16px; font-size: 0.95rem; background: #fff; color: var(--secondary-color);
+  display: flex; align-items: center; justify-content: space-between;
+}
+#view-reminders .rx-status-toggle:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 0 3px rgba(11, 60, 93, 0.12); }
+#view-reminders .rx-status-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
+  background: #fff; border: 1px solid rgba(10,31,68,0.12); border-radius: 10px; padding: 6px;
+  box-shadow: 0 10px 24px rgba(10, 31, 68, 0.12);
+}
+#view-reminders .rx-status-option {
+  width: 100%; border: 0; background: transparent; color: var(--secondary-color); text-align: left;
+  padding: 8px 10px; border-radius: 8px; font-size: 0.95rem;
+}
+#view-reminders .rx-status-option:hover { background: var(--secondary-color); color: #fff; }
+
 /* Admin action buttons */
 .btn-outline-primary {
   border-color: var(--primary-color);
@@ -87,6 +105,21 @@
   color: #fff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(15, 158, 153, 0.25);
+}
+
+#btnResetReminderStatus:focus,
+#btnResetReminderStatus:focus-visible {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(15, 158, 153, 0.16);
+}
+
+#btnResetReminderStatus:active,
+#btnResetReminderStatus.active,
+#btnResetReminderStatus.show {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(15, 158, 153, 0.16);
 }
 
 .btn-outline-danger {

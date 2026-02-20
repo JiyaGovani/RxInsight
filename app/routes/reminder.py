@@ -49,7 +49,10 @@ def get_admin_reminders():
 	if session.get("role") != 1:
 		return jsonify({"success": False, "error": "Admin access required"}), 403
 
-	username = str(request.args.get("username", "")).strip()
+	status = str(request.args.get("status", "")).strip().lower()
+	allowed_statuses = {"taken", "missed", "pending"}
+	if status and status not in allowed_statuses:
+		return jsonify({"success": False, "error": "Invalid status filter"}), 400
 
 	conn = None
 	try:
@@ -62,7 +65,7 @@ def get_admin_reminders():
 			if not reminders_table_exists:
 				return jsonify({"success": True, "reminders": []}), 200
 
-			if username:
+			if status:
 				cur.execute(
 					"""
 					SELECT
@@ -72,13 +75,14 @@ def get_admin_reminders():
 						r.number_of_days,
 						r.medicine_name,
 						r.status,
+						r.msg_sent,
 						r.created_at
 					FROM reminders r
 					LEFT JOIN users u ON u.user_id = r.user_id
-					WHERE u.username ILIKE %s
+					WHERE LOWER(r.status) = %s
 					ORDER BY r.created_at DESC, r.reminder_id DESC
 					""",
-					(f"%{username}%",)
+					(status,)
 				)
 			else:
 				cur.execute(
@@ -90,6 +94,7 @@ def get_admin_reminders():
 						r.number_of_days,
 						r.medicine_name,
 						r.status,
+						r.msg_sent,
 						r.created_at
 					FROM reminders r
 					LEFT JOIN users u ON u.user_id = r.user_id
@@ -109,7 +114,8 @@ def get_admin_reminders():
 					"number_of_days": row[3],
 					"medicine_name": row[4],
 					"status": row[5],
-					"created_at": row[6].isoformat() if hasattr(row[6], "isoformat") else str(row[6]),
+					"msg_sent": row[6],
+					"created_at": row[7].isoformat() if hasattr(row[7], "isoformat") else str(row[7]),
 				}
 			)
 
