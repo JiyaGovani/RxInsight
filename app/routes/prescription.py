@@ -46,10 +46,10 @@ def get_admin_prescriptions():
                         p.created_at
                     FROM prescriptions p
                     LEFT JOIN users u ON u.user_id = p.user_id
-                    WHERE u.username ILIKE %s
+                    WHERE LOWER(u.username) = LOWER(%s)
                     ORDER BY p.created_at DESC, p.prescription_id DESC
                     """,
-                    (f"%{username}%",)
+                    (username,)
                 )
             else:
                 cur.execute(

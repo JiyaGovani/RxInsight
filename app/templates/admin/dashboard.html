@@ -257,9 +257,26 @@
                             <i class="fa-solid fa-bell me-2"></i>View Reminders
                         </h3>
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <input id="reminderUserSearchInput" type="search" class="form-control" style="max-width: 280px;" placeholder="Search by username" aria-label="Search reminders by username">
-                            <button id="btnSearchReminders" class="btn text-white" style="background-color: var(--primary-color); border-color: var(--primary-color);" type="button">
-                                <i class="fa-solid fa-magnifying-glass me-1"></i>Search
+                            <div id="reminderStatusDropdown" class="rx-status-dropdown" style="max-width: 280px;">
+                                <button id="reminderStatusToggle" type="button" class="rx-status-toggle" aria-expanded="false" aria-label="Filter reminders by status">
+                                    <span id="reminderStatusLabel">All</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                                <div id="reminderStatusMenu" class="rx-status-menu d-none">
+                                    <button type="button" class="rx-status-option" data-value="">All</button>
+                                    <button type="button" class="rx-status-option" data-value="taken">Taken</button>
+                                    <button type="button" class="rx-status-option" data-value="missed">Missed</button>
+                                    <button type="button" class="rx-status-option" data-value="pending">Pending</button>
+                                </div>
+                                <select id="reminderStatusSelect" class="d-none" aria-label="Filter reminders by status">
+                                    <option value="">All</option>
+                                    <option value="taken">Taken</option>
+                                    <option value="missed">Missed</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                            <button id="btnResetReminderStatus" class="btn text-white" style="background-color: var(--primary-color); border-color: var(--primary-color);" type="button">
+                                <i class="fa-solid fa-rotate-left me-1"></i>Reset
                             </button>
                         </div>
                         <div id="adminReminderAlert" class="alert alert-info"

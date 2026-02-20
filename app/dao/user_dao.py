@@ -122,3 +122,24 @@ class UserDAO:
         except Exception:
             self.conn.rollback()
             raise
+
+    def update_password_by_email(self, email, password_plain):
+        try:
+            password_hash = generate_password_hash(password_plain)
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET password_hash = %s
+                    WHERE email = %s
+                    RETURNING user_id
+                    """,
+                    (password_hash, email),
+                )
+                row = cur.fetchone()
+
+            self.conn.commit()
+            return row[0] if row else None
+        except Exception:
+            self.conn.rollback()
+            raise
