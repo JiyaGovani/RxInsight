@@ -105,14 +105,22 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const activeReminders = (data.reminders || []).filter(r => {
-                if (r.status !== 'pending') return false;
-                
+            // Show all medications where end_date >= today (regardless of status)
+            let activeReminders = (data.reminders || []).filter(r => {
                 const endDate = new Date(r.end_date);
                 endDate.setHours(0, 0, 0, 0);
                 
                 return endDate >= today;
             });
+
+            // Deduplicate by reminder_id (keep most recent)
+            const uniqueReminders = new Map();
+            activeReminders.forEach(r => {
+                if (!uniqueReminders.has(r.reminder_id)) {
+                    uniqueReminders.set(r.reminder_id, r);
+                }
+            });
+            activeReminders = Array.from(uniqueReminders.values());
 
             if (activeReminders.length === 0) {
                 alert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No active medications at this time.';
@@ -196,8 +204,8 @@
                 const currentMinutes = now.getMinutes();
                 const currentTimeInMinutes = currentHours * 60 + currentMinutes;
                 
+                // Show all medications where end_date >= today (regardless of status)
                 const activeReminders = (remindersData.reminders || []).filter(r => {
-                    if (r.status !== 'pending') return false;
                     const endDate = new Date(r.end_date);
                     endDate.setHours(0, 0, 0, 0);
                     return endDate >= today;
@@ -590,13 +598,20 @@
         return String(value || '').slice(0, 5);
     }
 
-    async function updateReminderStatus(reminderId, status) {
+    async function updateReminderStatus(reminderId, status, doseDate = null, doseTime = null) {
+        // Use current date/time if not provided
+        const now = new Date();
+        if (!doseDate) {
+            doseDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+        if (!doseTime) {
+            doseTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
         const response = await fetch(`/reminders/${reminderId}/status`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, dose_date: doseDate, dose_time: doseTime })
         });
 
         const data = await response.json();

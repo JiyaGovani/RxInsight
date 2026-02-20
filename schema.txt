@@ -52,3 +52,14 @@ CREATE TABLE IF NOT EXISTS reminders (
     msg_sent BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+-- Dose logs table to track individual doses
+CREATE TABLE IF NOT EXISTS dose_logs (
+    log_id SERIAL PRIMARY KEY,
+    reminder_id INTEGER NOT NULL REFERENCES reminders(reminder_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    dose_date DATE NOT NULL,
+    dose_time TIME NOT NULL,
+    status VARCHAR(10) NOT NULL CHECK (status IN ('taken', 'missed', 'pending')),
+    logged_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE(reminder_id, dose_date, dose_time)
+);
