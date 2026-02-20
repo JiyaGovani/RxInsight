@@ -177,17 +177,20 @@ def set_reminder():
 		reminder_dao = ReminderDAO(conn)
 		user_id = session.get("user_id")
 
-		reminder_payload = {
-			"medicine_name": medicine_name,
-			"number_of_days": number_of_days,
-			"frequency": frequency,
-			"time_setters": time_setters,
-			"missed_dose_reminder": bool(data.get("missed_dose_reminder", False)),
-			"status": "pending",
-			"msg_sent": False,
-		}
+		reminder_ids = []
+		for slot_label, slot_time in zip(frequency, time_setters):
+			reminder_payload = {
+				"medicine_name": medicine_name,
+				"number_of_days": number_of_days,
+				"frequency": [slot_label],
+				"time_setters": [slot_time],
+				"missed_dose_reminder": bool(data.get("missed_dose_reminder", False)),
+				"status": "pending",
+				"msg_sent": False,
+			}
 
-		reminder_id = reminder_dao.insert_reminder(user_id, reminder_payload)
+			reminder_id = reminder_dao.insert_reminder(user_id, reminder_payload)
+			reminder_ids.append(reminder_id)
 		conn.commit()
 
 		sms_result = {"success": False, "error": "SMS not sent"}
@@ -207,7 +210,7 @@ def set_reminder():
 			except Exception as sms_error:
 				sms_result = {"success": False, "error": str(sms_error)}
 
-		return jsonify({"success": True, "reminder_id": reminder_id, "sms": sms_result}), 201
+		return jsonify({"success": True, "reminder_ids": reminder_ids, "sms": sms_result}), 201
 	except Exception as e:
 		if conn:
 			conn.rollback()
@@ -263,6 +266,9 @@ def update_reminder_status(reminder_id):
 
 		# Log the dose
 		log_id = reminder_dao.log_dose(reminder_id, user_id, dose_date, dose_time, status)
+		updated_reminder_id = reminder_dao.update_reminder_status_for_user(reminder_id, user_id, status)
+		if not updated_reminder_id:
+			return jsonify({"success": False, "error": "Failed to update reminder status"}), 500
 		
 		conn.commit()
 

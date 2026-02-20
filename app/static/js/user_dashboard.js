@@ -105,12 +105,14 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Show all medications where end_date >= today (regardless of status)
+            // Show medications until end date; on end date keep only pending ones
             let activeReminders = (data.reminders || []).filter(r => {
                 const endDate = new Date(r.end_date);
                 endDate.setHours(0, 0, 0, 0);
-                
-                return endDate >= today;
+
+                if (endDate < today) return false;
+                if (endDate > today) return true;
+                return String(r.status || '').toLowerCase() === 'pending';
             });
 
             // Deduplicate by reminder_id (keep most recent)
@@ -187,6 +189,10 @@
         
         return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
     }
+
+    function normalizeToHHMM(value) {
+        return String(value || '').slice(0, 5);
+    }
     
     // Update KPI values dynamically
     async function updateKPIs() {
@@ -194,6 +200,8 @@
             // Fetch reminders to count active medications
             const remindersResponse = await fetch('/reminders');
             const remindersData = await remindersResponse.json();
+            const dosesResponse = await fetch('/doses/today');
+            const dosesData = await dosesResponse.json();
             
             if (remindersResponse.ok && remindersData.success) {
                 const now = new Date();
@@ -204,29 +212,46 @@
                 const currentMinutes = now.getMinutes();
                 const currentTimeInMinutes = currentHours * 60 + currentMinutes;
                 
-                // Show all medications where end_date >= today (regardless of status)
+                // Show medications until end date; on end date keep only pending ones
                 const activeReminders = (remindersData.reminders || []).filter(r => {
                     const endDate = new Date(r.end_date);
                     endDate.setHours(0, 0, 0, 0);
-                    return endDate >= today;
+                    if (endDate < today) return false;
+                    if (endDate > today) return true;
+                    return String(r.status || '').toLowerCase() === 'pending';
                 });
                 
                 const activeCount = activeReminders.length;
                 
-                // Find next dose time
+                const takenDoseKeys = new Set();
+                if (dosesResponse.ok && dosesData.success) {
+                    (dosesData.doses || []).forEach(dose => {
+                        if (String(dose.status || '').toLowerCase() !== 'taken') return;
+                        const key = `${dose.reminder_id}:${normalizeToHHMM(dose.dose_time)}`;
+                        takenDoseKeys.add(key);
+                    });
+                }
+
+                // Find next dose time from DB statuses (reminders + today's dose_logs)
                 let nextDoseTime = null;
                 let minDiff = Infinity;
                 
                 activeReminders.forEach(reminder => {
+                    if (String(reminder.status || '').toLowerCase() === 'taken') return;
+
                     const times = reminder.time_setters || [];
                     times.forEach(timeStr => {
-                        const [hours, minutes] = timeStr.split(':').map(Number);
+                        const hhmm = normalizeToHHMM(timeStr);
+                        const reminderId = reminder.reminder_id;
+                        if (takenDoseKeys.has(`${reminderId}:${hhmm}`)) return;
+
+                        const [hours, minutes] = hhmm.split(':').map(Number);
                         const timeInMinutes = hours * 60 + minutes;
                         const diff = timeInMinutes - currentTimeInMinutes;
                         
                         if (diff > 0 && diff < minDiff) {
                             minDiff = diff;
-                            nextDoseTime = timeStr.substring(0, 5); // HH:MM format
+                            nextDoseTime = hhmm;
                         }
                     });
                 });
@@ -284,7 +309,8 @@
         }
     }
     
-    // Make updateKPIs and formatTime12Hour globally accessible
+    // Make dashboard helpers globally accessible
+    window.loadActiveMedications = loadActiveMedications;
     window.updateDashboardKPIs = updateKPIs;
     window.formatTime12Hour = formatTime12Hour;
     
@@ -678,7 +704,9 @@
             card.style.background = 'rgba(255,255,255,0.75)';
 
             const frequencies = (item.frequency || []).join(', ');
-            const times = (item.time_setters || []).join(', ');
+            const times = (item.time_setters || [])
+                .map((t) => window.formatTime12Hour ? window.formatTime12Hour(t) : t)
+                .join(', ');
 
             let actions = '';
             if (item.status === 'pending') {
@@ -725,6 +753,7 @@
             enqueueDueReminderPopups();
             // Update KPIs after reminders are loaded
             if (window.updateDashboardKPIs) window.updateDashboardKPIs();
+            if (window.loadActiveMedications) window.loadActiveMedications();
         } catch (err) {
             remindersList.innerHTML = `<div class="text-danger small">${err.message}</div>`;
         }
@@ -735,7 +764,7 @@
             const button = event.target.closest('.reminder-action');
             if (!button) return;
 
-            const reminderId = button.getAttribute('data-id');
+            const reminderId = Number(button.getAttribute('data-id'));
             const status = button.getAttribute('data-status');
 
             try {
