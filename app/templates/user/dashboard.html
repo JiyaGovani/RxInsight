@@ -258,12 +258,24 @@
                                     <input type="email" class="form-control" id="profileEmail" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Contact Number</label>
-                                    <input type="tel" class="form-control" id="profileContactNumber" required>
+                                    <div class="input-box">
+                                        <label class="form-label text-muted">Contact Number</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">+91</span>
+                                            <input type="tel" class="form-control pe-5" id="profileContactNumber" pattern="[0-9]{10}" maxlength="10" required>
+                                        </div>
+                                        <i class="fa-solid fa-phone input-icon"></i>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted">Emergency Contact</label>
-                                    <input type="tel" class="form-control" id="profileEmergencyContact" required>
+                                    <div class="input-box">
+                                        <label class="form-label text-muted">Emergency Contact</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">+91</span>
+                                            <input type="tel" class="form-control pe-5" id="profileEmergencyContact" pattern="[0-9]{10}" maxlength="10">
+                                        </div>
+                                        <i class="fa-solid fa-heart input-icon"></i>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-muted">Date of Birth</label>

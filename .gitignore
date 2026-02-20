@@ -1,6 +1,13 @@
 .env
+<<<<<<< HEAD
 
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+=======
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+>>>>>>> 1c6b410ddd0daabbce4f57f7d4f071f248676a77

@@ -114,24 +114,29 @@
                         <i class="fa-solid fa-lock input-icon"></i>
                     </div>
 
-                    <div class="form-floating mb-2 input-box">
-                        <input type="tel" id="contactNumber" name="contact_number" class="form-control pe-5" placeholder="Contact Number" 
-                               pattern="[0-9]{10}" maxlength="10" required>
-                        <label for="contactNumber">Contact Number (10 digits)</label>
+                    <div class="mb-2 input-box">
+                        <label for="contactNumber" class="form-label text-muted mb-1" style="font-size: 0.9rem;">Contact Number (10 digits)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+91</span>
+                            <input type="tel" id="contactNumber" name="contact_number" class="form-control pe-5" placeholder="Contact Number" 
+                                   pattern="[0-9]{10}" maxlength="10" required>
+                        </div>
                         <i class="fa-solid fa-phone input-icon"></i>
                     </div>
 
-                    <div class="form-floating mb-2 input-box">
-                        <input type="tel" id="lovedOneContact" name="emergency_contact" class="form-control pe-5" placeholder="Loved One's Contact" 
-                               pattern="[0-9]{10}" maxlength="10">
-                        <label for="lovedOneContact">Loved One's Contact (Optional)</label>
+                    <div class="mb-2 input-box">
+                        <label for="lovedOneContact" class="form-label text-muted mb-1" style="font-size: 0.9rem;">Loved One's Contact (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+91</span>
+                            <input type="tel" id="lovedOneContact" name="emergency_contact" class="form-control pe-5" placeholder="Loved One's Contact" 
+                                   pattern="[0-9]{10}" maxlength="10">
+                        </div>
                         <i class="fa-solid fa-heart input-icon"></i>
                     </div>
 
                     <div class="form-floating mb-2 input-box">
-                        <input id="dateOfBirth" name="date_of_birth" type="date" class="form-control pe-5" placeholder="Date of Birth" required>
+                        <input id="dateOfBirth" name="date_of_birth" type="date" class="form-control" placeholder="Date of Birth" required>
                         <label for="dateOfBirth">Date of Birth</label>
-                        <i class="fa-solid fa-calendar input-icon"></i>
                     </div>
 
                     <div class="row g-2 mb-2">

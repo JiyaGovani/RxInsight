@@ -730,3 +730,115 @@
   text-align: right;
   word-break: break-word;
 }
+/* Mobile Responsiveness for Small Screens */
+@media (max-width: 576px) {
+  body {
+    font-size: 14px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+  }
+
+  h4 {
+    font-size: 1.1rem;
+  }
+
+  h5 {
+    font-size: 1rem;
+  }
+
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 8px 14px;
+  }
+
+  .form-floating label {
+    font-size: 0.9rem;
+  }
+
+  #view-overview .overview-stat-card {
+    padding: 12px;
+  }
+
+  #view-overview .overview-stat-number {
+    font-size: 1.5rem;
+  }
+
+  #view-overview .overview-stat-label {
+    font-size: 0.8rem;
+  }
+
+  #view-medicines .medicine-action-btn {
+    padding: 10px;
+  }
+
+  #view-medicines .medicine-action-title {
+    font-size: 0.9rem;
+  }
+
+  #view-medicines .medicine-action-subtitle {
+    font-size: 0.75rem;
+  }
+
+  #view-medicines .medicine-record-card {
+    padding: 12px;
+  }
+
+  #view-medicines .medicine-record-name {
+    font-size: 0.95rem;
+  }
+
+  #view-medicines .medicine-field-label {
+    font-size: 0.68rem;
+  }
+
+  #view-medicines .medicine-field-value {
+    font-size: 0.85rem;
+  }
+
+  #view-users .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  #view-users .user-record-name {
+    font-size: 0.95rem;
+  }
+
+  #view-users .user-contact-line {
+    font-size: 0.82rem;
+  }
+
+  #view-users .user-field-label {
+    font-size: 0.72rem;
+  }
+
+  #view-users .user-field-value {
+    font-size: 0.85rem;
+  }
+
+  #view-users .user-record-toggle {
+    width: 26px;
+    height: 26px;
+  }
+
+  #view-users .user-detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  #view-users .user-field-value {
+    text-align: left;
+  }
+}

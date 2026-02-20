@@ -105,14 +105,22 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const activeReminders = (data.reminders || []).filter(r => {
-                if (r.status !== 'pending') return false;
-                
+            // Show all medications where end_date >= today (regardless of status)
+            let activeReminders = (data.reminders || []).filter(r => {
                 const endDate = new Date(r.end_date);
                 endDate.setHours(0, 0, 0, 0);
                 
                 return endDate >= today;
             });
+
+            // Deduplicate by reminder_id (keep most recent)
+            const uniqueReminders = new Map();
+            activeReminders.forEach(r => {
+                if (!uniqueReminders.has(r.reminder_id)) {
+                    uniqueReminders.set(r.reminder_id, r);
+                }
+            });
+            activeReminders = Array.from(uniqueReminders.values());
 
             if (activeReminders.length === 0) {
                 alert.innerHTML = '<i class="fa-solid fa-circle-info me-2"></i>No active medications at this time.';
@@ -196,8 +204,8 @@
                 const currentMinutes = now.getMinutes();
                 const currentTimeInMinutes = currentHours * 60 + currentMinutes;
                 
+                // Show all medications where end_date >= today (regardless of status)
                 const activeReminders = (remindersData.reminders || []).filter(r => {
-                    if (r.status !== 'pending') return false;
                     const endDate = new Date(r.end_date);
                     endDate.setHours(0, 0, 0, 0);
                     return endDate >= today;
@@ -332,11 +340,8 @@
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <h5 class="card-title fw-bold" style="color: var(--secondary-color);">
-                                        <i class="fa-solid fa-file-medical me-2" style="color: var(--primary-color);"></i>Prescription #${prescription.prescription_id}
+                                        <i class="fa-solid fa-file-medical me-2" style="color: var(--primary-color);"></i>${formattedDate}
                                     </h5>
-                                    <p class="card-text text-muted small">
-                                        <i class="fa-regular fa-calendar me-1"></i>Uploaded on: ${formattedDate}
-                                    </p>
                                 </div>
                             </div>
                             <hr>
@@ -386,8 +391,23 @@
         if (!user) return;
         if (profileUsername) profileUsername.value = user.username ?? '';
         if (profileEmail) profileEmail.value = user.email ?? '';
-        if (profileContactNumber) profileContactNumber.value = user.contact_number ?? '';
-        if (profileEmergencyContact) profileEmergencyContact.value = user.emergency_contact ?? '';
+        
+        // Strip +91 prefix for display (user will see only 10 digits)
+        if (profileContactNumber) {
+            let contact = user.contact_number ?? '';
+            if (contact.startsWith('+91')) {
+                contact = contact.substring(3);
+            }
+            profileContactNumber.value = contact;
+        }
+        if (profileEmergencyContact) {
+            let emergency = user.emergency_contact ?? '';
+            if (emergency.startsWith('+91')) {
+                emergency = emergency.substring(3);
+            }
+            profileEmergencyContact.value = emergency;
+        }
+        
         if (profileDateOfBirth) profileDateOfBirth.value = user.date_of_birth ?? '';
         if (profileWeight) profileWeight.value = user.weight ?? '';
         if (profileHeight) profileHeight.value = user.height ?? '';
@@ -578,13 +598,20 @@
         return String(value || '').slice(0, 5);
     }
 
-    async function updateReminderStatus(reminderId, status) {
+    async function updateReminderStatus(reminderId, status, doseDate = null, doseTime = null) {
+        // Use current date/time if not provided
+        const now = new Date();
+        if (!doseDate) {
+            doseDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+        if (!doseTime) {
+            doseTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
         const response = await fetch(`/reminders/${reminderId}/status`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, dose_date: doseDate, dose_time: doseTime })
         });
 
         const data = await response.json();
@@ -1012,6 +1039,9 @@
                 msgDiv.textContent = 'Upload successful!';
                 msgDiv.style.color = 'green';
                 renderMedicineCards(data.medicines || []);
+                if (window.updateDashboardKPIs) {
+                    window.updateDashboardKPIs();
+                }
             } else {
                 msgDiv.textContent = data.error || 'Upload failed.';
                 msgDiv.style.color = 'red';
