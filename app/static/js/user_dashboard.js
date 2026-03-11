@@ -2,6 +2,7 @@
 
 // --- Image Fallback, Nav Toggle, View Switching ---
 (function () {
+    // Replaces broken image with alt text fallback
     function replaceImageWithAlt(img) {
         if (!img || img.dataset.fallbackApplied === 'true') return;
         const altText = (img.getAttribute('alt') || 'Image').trim();
@@ -26,12 +27,14 @@
     const navMenu = document.getElementById('rxNavMenu');
     const actionList = document.getElementById('rxActionList');
 
+    // Opens or closes the navigation menu
     function setNavOpen(isOpen) {
         if (!navToggle || !navMenu) return;
         navToggle.setAttribute('aria-expanded', String(isOpen));
         navMenu.classList.toggle('rx-nav-open', isOpen);
     }
 
+    // Switches dashboard view based on selected panel
     function switchView(viewName) {
         if (viewName === 'logout') { window.location.href = '/logout'; return; }
 
@@ -92,6 +95,7 @@
     });
 
     // Load active medications when view is activated
+    // Loads and displays active medications for the user
     async function loadActiveMedications() {
         const alert = document.getElementById('activeMedicationsAlert');
         const list = document.getElementById('activeMedicationsList');
@@ -180,6 +184,7 @@
     updateKPIs();
     
     // Helper function to convert 24-hour time to 12-hour format
+    // Converts 24-hour time to 12-hour format
     function formatTime12Hour(time24) {
         if (!time24 || time24 === '--:--') return '--:--';
         
@@ -190,11 +195,13 @@
         return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
     }
 
+    // Normalizes time string to HH:MM format
     function normalizeToHHMM(value) {
         return String(value || '').slice(0, 5);
     }
     
     // Update KPI values dynamically
+    // Updates dashboard KPIs (Active Meds, Next Dose, Adherence, Total Prescriptions)
     async function updateKPIs() {
         try {
             // Fetch reminders to count active medications
@@ -315,6 +322,7 @@
     window.formatTime12Hour = formatTime12Hour;
     
     // Load prescription history function
+    // Loads and displays user's prescription history
     async function loadPrescriptionHistory() {
         const alert = document.getElementById('historyAlert');
         const list = document.getElementById('historyList');
@@ -403,16 +411,19 @@
 
     let profileLoadedOnce = false;
 
+    // Sets profile form message text and color
     function setProfileMessage(text, color) {
         if (!profileMsg) return;
         profileMsg.textContent = text || '';
         profileMsg.style.color = color || '';
     }
 
+    // Maps numeric role to string ('Admin' or 'User')
     function mapRole(role) {
         return Number(role) === 1 ? 'Admin' : 'User';
     }
 
+    // Fills profile form fields with user data
     function fillProfileForm(user) {
         if (!user) return;
         if (profileUsername) profileUsername.value = user.username ?? '';
@@ -443,6 +454,7 @@
         if (welcomeUsername) welcomeUsername.textContent = liveUsername;
     }
 
+    // Loads user profile data from server
     async function loadUserProfile(force = false) {
         if (profileLoadedOnce && !force) return;
 
@@ -542,6 +554,7 @@
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     const reminderAudioContext = AudioContextClass ? new AudioContextClass() : null;
 
+    // Unlocks audio context for reminder sound
     function unlockReminderAudio() {
         if (reminderAudioContext && reminderAudioContext.state === 'suspended') {
             reminderAudioContext.resume().catch(() => { });
@@ -552,6 +565,7 @@
         window.addEventListener(eventName, unlockReminderAudio, { once: true, passive: true });
     });
 
+    // Plays reminder beep sound
     async function playReminderSound() {
         if (!reminderAudioContext) return;
 
@@ -590,6 +604,7 @@
         osc2.stop(startAt + 0.63);
     }
 
+    // Stops reminder beep loop
     function stopReminderBeepLoop() {
         if (reminderBeepTimer) {
             clearInterval(reminderBeepTimer);
@@ -597,6 +612,7 @@
         }
     }
 
+    // Starts reminder beep loop
     function startReminderBeepLoop() {
         stopReminderBeepLoop();
         playReminderSound().catch(() => { });
@@ -605,14 +621,17 @@
         }, 900);
     }
 
+    // Saves shown reminder popup keys to session storage
     function saveShownPopupKeys() {
         sessionStorage.setItem('shownReminderPopupKeys', JSON.stringify(Array.from(shownPopupKeys)));
     }
 
+    // Gets today's date key (YYYY-MM-DD)
     function getTodayKey() {
         return new Date().toISOString().slice(0, 10);
     }
 
+    // Gets current time in HH:MM format
     function formatNowHHMM() {
         const now = new Date();
         const hh = String(now.getHours()).padStart(2, '0');
@@ -620,10 +639,12 @@
         return `${hh}:${mm}`;
     }
 
+    // Normalizes time string to HH:MM
     function normalizeTime(value) {
         return String(value || '').slice(0, 5);
     }
 
+    // Updates reminder status (taken/missed) via API
     async function updateReminderStatus(reminderId, status, doseDate = null, doseTime = null) {
         // Use current date/time if not provided
         const now = new Date();
@@ -646,6 +667,7 @@
         }
     }
 
+    // Shows next due reminder popup
     function showNextReminderPopup() {
         if (!reminderAlertModal || activePopup || popupQueue.length === 0) return;
 
@@ -655,6 +677,7 @@
         reminderAlertModal.show();
     }
 
+    // Enqueues reminder popups for due reminders
     function enqueueDueReminderPopups() {
         const nowHHMM = formatNowHHMM();
         const todayKey = getTodayKey();
@@ -678,12 +701,14 @@
         showNextReminderPopup();
     }
 
+    // Returns badge class for reminder status
     function getStatusBadgeClass(status) {
         if (status === 'taken') return 'bg-success';
         if (status === 'missed') return 'bg-danger';
         return 'bg-warning text-dark';
     }
 
+    // Renders reminders list in dashboard
     function renderReminders(items) {
         if (!remindersList) return;
 
@@ -735,6 +760,7 @@
         });
     }
 
+    // Sets active filter button for reminders
     function setActiveFilterButton() {
         reminderFilterButtons.forEach((button) => {
             const isActive = button.getAttribute('data-filter') === currentReminderFilter;
@@ -742,6 +768,7 @@
         });
     }
 
+    // Loads reminders from server and updates dashboard
     async function loadReminders() {
         if (!remindersList) return;
         try {
@@ -789,6 +816,7 @@
         });
     }
 
+    // Renders time setter dropdowns for reminder form
     function renderTimeSetters() {
         const selected = Array.from(frequencyCheckboxes)
             .filter((checkbox) => checkbox.checked)
@@ -979,11 +1007,13 @@
 
     if (!browseBtn || !fileInput || !msgDiv) return;
 
+    // Safely converts value to string for display
     function safeText(value) {
         if (value === null || value === undefined || value === '') return 'N/A';
         return String(value);
     }
 
+    // Renders medicine cards after prescription upload
     function renderMedicineCards(medicines) {
         if (!cardsSection || !cardsContainer) return;
 
