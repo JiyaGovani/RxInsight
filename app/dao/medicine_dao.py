@@ -1,5 +1,3 @@
-from flask import session
-
 
 class MedicineDAO:
     def __init__(self, connection):

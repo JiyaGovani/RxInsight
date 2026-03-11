@@ -13,7 +13,7 @@ bp = Blueprint("prescription", __name__)
 @bp.route("/admin/prescriptions", methods=["GET"])
 @login_required
 def get_admin_prescriptions():
-    """Fetch all prescriptions across users grouped by prescription_id for admin dashboard."""
+    """Fetch all prescriptions across all users grouped by prescription_id for admin dashboard."""
     if session.get("role") != 1:
         return jsonify({"success": False, "error": "Admin access required"}), 403
 
@@ -24,7 +24,6 @@ def get_admin_prescriptions():
     conn = None
     try:
         conn = get_connection()
-
         with conn.cursor() as cur:
             cur.execute("SELECT to_regclass('public.prescriptions')")
             prescriptions_table_exists = cur.fetchone()[0] is not None
@@ -35,15 +34,8 @@ def get_admin_prescriptions():
             if username:
                 cur.execute(
                     """
-                    SELECT
-                        p.prescription_id,
-                        p.user_id,
-                        u.username,
-                        p.medicine_name,
-                        p.dosage,
-                        p.frequency,
-                        p.duration,
-                        p.created_at
+                    SELECT p.prescription_id, p.user_id, u.username,
+                           p.medicine_name, p.dosage, p.frequency, p.duration, p.created_at
                     FROM prescriptions p
                     LEFT JOIN users u ON u.user_id = p.user_id
                     WHERE LOWER(u.username) = LOWER(%s)
@@ -54,15 +46,8 @@ def get_admin_prescriptions():
             else:
                 cur.execute(
                     """
-                    SELECT
-                        p.prescription_id,
-                        p.user_id,
-                        u.username,
-                        p.medicine_name,
-                        p.dosage,
-                        p.frequency,
-                        p.duration,
-                        p.created_at
+                    SELECT p.prescription_id, p.user_id, u.username,
+                           p.medicine_name, p.dosage, p.frequency, p.duration, p.created_at
                     FROM prescriptions p
                     LEFT JOIN users u ON u.user_id = p.user_id
                     ORDER BY p.created_at DESC, p.prescription_id DESC
@@ -70,34 +55,33 @@ def get_admin_prescriptions():
                 )
             rows = cur.fetchall()
 
+        # Group rows by (prescription_id, user_id)
         prescriptions = {}
         for row in rows:
             prescription_id = row[0]
             user_id = row[1]
-            username = row[2]
+            username_val = row[2]
             grouping_key = (prescription_id, user_id)
 
             if grouping_key not in prescriptions:
                 prescriptions[grouping_key] = {
                     "prescription_id": prescription_id,
                     "user_id": user_id,
-                    "username": username,
+                    "username": username_val,
                     "upload_date": row[7].isoformat() if hasattr(row[7], "isoformat") else str(row[7]),
                     "medicines": [],
                 }
-
-            prescriptions[grouping_key]["medicines"].append(
-                {
-                    "medicine_name": row[3],
-                    "dosage": row[4],
-                    "frequency": row[5],
-                    "duration": row[6],
-                }
-            )
+            prescriptions[grouping_key]["medicines"].append({
+                "medicine_name": row[3],
+                "dosage": row[4],
+                "frequency": row[5],
+                "duration": row[6],
+            })
 
         prescription_list = list(prescriptions.values())
-        if limit is not None:
+        if limit:
             prescription_list = prescription_list[:limit]
+
         return jsonify({"success": True, "prescriptions": prescription_list}), 200
 
     except Exception as e:
@@ -106,6 +90,7 @@ def get_admin_prescriptions():
     finally:
         if conn:
             conn.close()
+
 
 @bp.route("/upload-prescription", methods=["POST"])
 @login_required

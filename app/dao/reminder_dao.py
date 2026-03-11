@@ -1,11 +1,10 @@
+
 from datetime import date
-import logging
 
 
 class ReminderDAO:
     def __init__(self, connection):
         self.conn = connection
-        self.logger = logging.getLogger(__name__)
 
     def insert_reminder(self, user_id, data):
         query = """
